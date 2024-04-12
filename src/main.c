@@ -5,7 +5,6 @@
 #include "encoder.h"
 #include "usart.h"
 #include "i2c.h"
-#include "usb/usb.h"
 #include "crc.h"
 #include "rng.h"
 #include "watchdog.h"
@@ -72,14 +71,13 @@ int main(void) {
 	);
 	sys_clock_init(sys_config);
 	/* TIM config */
-	/*config_TIM_kernel_clocks(
+	config_TIM_kernel_clocks(
 			TIM_MUL_2, HRTIM_SRC_CPU, LPTIM_CLK_SRC_APBx,
 			LPTIM_CLK_SRC_APBx, LPTIM_CLK_SRC_APBx
 	);
 	config_TIM(TIM8, TIM_APB2_kernel_frequency / 10000, 1000);  // 10 Hz
 	start_TIM_update_irq(TIM8);
 	start_TIM(TIM8);
-	*/
 
 	/* GPIO config */
 	config_GPIO(GPIOA, 1, GPIO_output, GPIO_no_pull, GPIO_push_pull);	// user led D2
@@ -92,16 +90,15 @@ int main(void) {
 	config_EXTI(5, GPIOC, 1, 1);	start_EXTI(5);
 
 	/* MCO config */
-	/*config_MCO(MCO2_C9, MCO2_SRC_PLL1_P, 1);  // 400 MHz
-	*/
-	config_MCO(MCO1_A8, MCO1_SRC_HSI48, 0xF);  // 4MHz?
+	config_MCO(MCO2_C9, MCO2_SRC_PLL1_P, 1);  // 400 MHz
+
 	/* PWM config */
-	/*config_PWM(TIM1_CH1_A8, TIM_APB2_kernel_frequency / 1000000, 20000);  // 50Hz
-	*/
+	config_PWM(TIM1_CH1_A8, TIM_APB2_kernel_frequency / 1000000, 20000);  // 50Hz
+
 
 	/* CRC config */
-	/*config_CRC();
-	*/
+	config_CRC();
+
 	/* HASH config */
 	// TODO: [3]
 
@@ -109,97 +106,39 @@ int main(void) {
 	// TODO: [4]
 
 	/* RNG config */
-	/*config_RNG_kernel_clock(RNG_CLK_SRC_PLL1_Q);  // 200 MHz
-	*/
+	config_RNG_kernel_clock(RNG_CLK_SRC_PLL1_Q);  // 200 MHz
+
 	// TODO: [5]
 
 	/* UART config */
-	/*
 	config_USART_kernel_clocks(USART_CLK_SRC_APBx, USART_CLK_SRC_APBx, USART_CLK_SRC_APBx);
 	config_UART(USART1_TX_A9, USART1_RX_A10, 115200, 1);
-	*/
 
 	/* I2C config */
-	/*config_I2C_kernel_clocks(I2C_CLK_SRC_APBx, I2C_CLK_SRC_APBx);
+	config_I2C_kernel_clocks(I2C_CLK_SRC_APBx, I2C_CLK_SRC_APBx);
 	I2C_setting_t I2C_setting = {  // 100 KHz
 			APB1_clock_frequency / 4000000,
 			0x13UL, 0x0FU, 2, 4
 	};
 	config_I2C(I2C1_SCL_B6, I2C1_SDA_B7, I2C_setting, 0x50);
-	*/
+
 
 	/* USB config */
-	config_USB_kernel_clock(USB_CLK_SRC_HSI48);  // HSI48 is solely used for USB
-	config_USB_FS_device(USB2_FS_DP_A12, USB2_FS_DN_A11);
-	USB_OTG_DeviceTypeDef		*device =	(void*)((uint32_t)USB_OTG_FS + 0x800);
-	USB_OTG_FS->GOTGCTL = 0x00000D00;
-	USB_OTG_FS->GINTSTS = 0x208C0044;
-	USB_OTG_FS->GCCFG = 0xFFFF2100;
-	device->DCFG = 0x03002000;
-	device->DCFG = 0x07000000;
-	USB2_OTG_FS->CID = 0x4D2E562EUL; // set CID to "M.V." for fun :)
-	// config interfaces  TODO: redo structure!!!!! ( hide handle :(( )
-	USB_handle_t* handle = fconfig_USB_handle(USB2_OTG_FS, USB_CLASS_HID_KEYBOARD, 1U, 0U, HID_KEYBOARD_DESCRIPTOR_SIZE);
-	// start device
-	(void)write_descriptor(
-	write_HID_descriptor(
-	write_descriptor(
-	write_descriptor(
-		handle->class->descriptor,
-		USB_config_descriptor_type,
-		0x22U, 0x01U, 0x01U, 0x00U,
-		USB_bus_powered, 0x32U
-	),
-		USB_interface_descriptor_type,
-		0x00U, 0x00U, 0x01U, 0x03U, 0x01U,
-		0x01U,			// interface protocol
-		0x00U
-	),
-		0x0111U,
-		0x00,
-		HID_KEYBOARD_REPORT_DESCRIPTOR_SIZE
-	),
-		USB_endpoint_descriptor_type,
-		0x08U, 0x81U, EP_TYPE_INTERRUPT, 0x0AU
-	);
 
-	(void)write_descriptor(
-		handle->descriptor->device,
-		USB_device_descriptor_type,
-		0x2000U,		// USB 2.0
-		0x03U,			// HID TODO: define
-		0x00U,			// no subclasss
-		0x01U,			// device protocol set to the same as inteface TODO: valid??
-		64U,			// EP0_MPS TODO: define
-		0x0000,			// vendor ID
-		0x0000,			// product ID
-		0x2000,			// device version (USB 2.0??) TODO: valid?
-		0x1U,			// manufacturer string index
-		0x2U,			// product string index
-		0x3U,			// serial string index
-		0x1U			// config count
-	);
 
-	handle->descriptor->lang_ID_string = create_string_descriptor("NL");
-	handle->descriptor->manufacturer_string = create_string_descriptor("Marijn");
-	handle->descriptor->product_string = create_string_descriptor("Keyboard");
-	handle->descriptor->serial_string = create_string_descriptor("fb49484a-ce2a-466e-aded-073dab3a483b");
-	handle->descriptor->configuration_string = create_string_descriptor("");
-	handle->descriptor->interface_string = create_string_descriptor("");
-
-	start_USB(USB2_OTG_FS);
 
 	// Watchdog config (32kHz / (4 << prescaler))
-	//config_watchdog(0, 0xFFFUL);	// 1s
-	//start_watchdog();
+	config_watchdog(0, 0xFFFUL);	// 1s
+	start_watchdog();
 
+
+	uint8_t tx_data[5] = {0x50, 0x21, 0x85, 0xA3, 0x1C};
 	// main loop
 	for(;;) {
-		//TIM1->CCR1 = (TIM1->CCR1 + 100) % 20000;
-		//UART_print(USART1, "Hello World!\n", 100);
-		//reset_watchdog();
-		//delay_ms(100);
-		__NOP();
+		TIM1->CCR1 = (TIM1->CCR1 + 100) % 20000;
+		UART_print(USART1, "Hello World!\n", 100);
+		I2C_master_write_reg(I2C1, 0x50, 0x1234, I2C_REG_16, tx_data, 5, 100);
+		reset_watchdog();
 	}
 
 
