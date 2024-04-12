@@ -65,10 +65,10 @@ uint32_t I2C_peripheral_frequencies[4] = 	{0, 0, 0, 0};
  * init
  * */
 void config_I2C_kernel_clocks(I2C_CLK_SRC_t i2c123_src, I2C_CLK_SRC_t i2c4_src) {
-	RCC->D2CCIP2R &= ~RCC_D2CCIP2R_I2C123SEL;
-	RCC->D2CCIP2R |= i2c123_src << RCC_D2CCIP2R_I2C123SEL_Pos;
-	RCC->D3CCIPR &= ~RCC_D3CCIPR_I2C4SEL;
-	RCC->D3CCIPR |= i2c4_src << RCC_D3CCIPR_I2C4SEL_Pos;
+	RCC->CDCCIP2R &= ~RCC_CDCCIP2R_I2C123SEL;
+	RCC->CDCCIP2R |= i2c123_src << RCC_CDCCIP2R_I2C123SEL_Pos;
+	RCC->SRDCCIPR &= ~RCC_SRDCCIPR_I2C4SEL;
+	RCC->SRDCCIPR |= i2c4_src << RCC_SRDCCIPR_I2C4SEL_Pos;
 	switch (i2c123_src) {
 		case I2C_CLK_SRC_APBx:		I2C123_kernel_frequency = APB1_clock_frequency; break;	// APB1
 		case I2C_CLK_SRC_PLL3_R:	I2C123_kernel_frequency = PLL3_R_clock_frequency; break;

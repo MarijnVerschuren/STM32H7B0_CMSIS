@@ -15,8 +15,8 @@ uint32_t RNG_kernel_frequency = 0;
  * init
  * */
 void config_RNG_kernel_clock(RNG_CLK_SRC_t src) {
-	RCC->D2CCIP2R &= ~RCC_D2CCIP2R_RNGSEL;
-	RCC->D2CCIP2R |= src << RCC_D2CCIP2R_RNGSEL_Pos;
+	RCC->CDCCIP2R &= ~RCC_CDCCIP2R_RNGSEL;
+	RCC->CDCCIP2R |= src << RCC_CDCCIP2R_RNGSEL_Pos;
 	switch (src) {
 		case RNG_CLK_SRC_HSI48:		RNG_kernel_frequency = HSI48_clock_frequency; return;
 		case RNG_CLK_SRC_PLL1_Q:	RNG_kernel_frequency = PLL1_Q_clock_frequency; return;

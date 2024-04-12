@@ -9,7 +9,7 @@
  * init
  * */
 void fconfig_CRC(uint8_t reverse_out, CRC_REV_IN_t reverse_in, CRC_POLY_SIZE_t poly_size) {
-	do { RCC->AHB4ENR |= RCC_AHB4ENR_CRCEN; } while (!(RCC->AHB4ENR & RCC_AHB4ENR_CRCEN));
+	do { RCC->AHB1ENR |= RCC_AHB1ENR_CRCEN; } while (!(RCC->AHB1ENR & RCC_AHB1ENR_CRCEN));
 	CRC->CR = (
 		(reverse_out << CRC_CR_REV_OUT_Pos)		|
 		(reverse_in << CRC_CR_REV_IN_Pos)		|

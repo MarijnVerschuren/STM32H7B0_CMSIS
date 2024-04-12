@@ -19,7 +19,7 @@ typedef struct {
 /*!<
  * variables
  * */
-uint32_t USART16_kernel_frequency =		0;
+uint32_t USART169A_kernel_frequency =	0;
 uint32_t USART234578_kernel_frequency =	0;
 uint32_t LPUART1_kernel_frequency =		0;
 
@@ -29,7 +29,7 @@ uint32_t LPUART1_kernel_frequency =		0;
  * */
 static inline uint16_t UART_division(dev_clock_id_t clk, uint32_t baud) {
 	switch (clk) {
-		case DEV_CLOCK_ID_APB1:	return USART16_kernel_frequency / baud;
+		case DEV_CLOCK_ID_APB1:	return USART169A_kernel_frequency / baud;
 		case DEV_CLOCK_ID_APB2: return USART234578_kernel_frequency / baud;
 		case DEV_CLOCK_ID_APB4: return LPUART1_kernel_frequency / baud;
 		default:				return 0;
@@ -52,30 +52,32 @@ USART_IRQ_IO_t uart_buf_5;		extern void UART5_IRQHandler(void)		{ UART_irq_handl
 USART_IRQ_IO_t uart_buf_6;		extern void USART6_IRQHandler(void)		{ UART_irq_handler(USART6,	&uart_buf_6); }
 USART_IRQ_IO_t uart_buf_7;		extern void UART7_IRQHandler(void)		{ UART_irq_handler(UART7,	&uart_buf_7); }
 USART_IRQ_IO_t uart_buf_8;		extern void UART8_IRQHandler(void)		{ UART_irq_handler(UART8,	&uart_buf_8); }
+USART_IRQ_IO_t uart_buf_9;		extern void UART9_IRQHandler(void)		{ UART_irq_handler(UART9,	&uart_buf_9); }
+USART_IRQ_IO_t uart_buf_10;		extern void USART10_IRQHandler(void)	{ UART_irq_handler(USART10,	&uart_buf_10); }
 USART_IRQ_IO_t uart_buf_lp1;	extern void LPUART1_IRQHandler(void)	{ UART_irq_handler(LPUART1,	&uart_buf_lp1); }
 
 
 /*!<
  * init
  * */
-void config_USART_kernel_clocks(USART_CLK_SRC_t usart16_src, USART_CLK_SRC_t usart234578_src, USART_CLK_SRC_t lpuart1_src) {
-	RCC->D2CCIP2R &= ~(
-		RCC_D2CCIP2R_USART16SEL |
-		RCC_D2CCIP2R_USART28SEL
+void config_USART_kernel_clocks(USART_CLK_SRC_t usart169A_src, USART_CLK_SRC_t usart234578_src, USART_CLK_SRC_t lpuart1_src) {
+	RCC->CDCCIP2R &= ~(
+		RCC_CDCCIP2R_USART16910SEL |
+		RCC_CDCCIP2R_USART234578SEL
 	);
-	RCC->D2CCIP2R |= (
-		(usart16_src << RCC_D2CCIP2R_USART16SEL_Pos) |
-		(usart234578_src << RCC_D2CCIP2R_USART28SEL_Pos)
+	RCC->CDCCIP2R |= (
+		(usart169A_src << RCC_CDCCIP2R_USART16910SEL_Pos) |
+		(usart234578_src << RCC_CDCCIP2R_USART234578SEL_Pos)
 	);
-	RCC->D3CCIPR &= ~RCC_D3CCIPR_LPUART1SEL;
-	RCC->D3CCIPR |=	lpuart1_src << RCC_D3CCIPR_LPUART1SEL_Pos;
-	switch (usart16_src) {
-		case USART_CLK_SRC_APBx:	USART16_kernel_frequency = APB2_clock_frequency; break;		// APB2
-		case USART_CLK_SRC_PLL2_Q:	USART16_kernel_frequency = PLL2_Q_clock_frequency; break;
-		case USART_CLK_SRC_PLL3_Q:	USART16_kernel_frequency = PLL3_Q_clock_frequency; break;
-		case USART_CLK_SRC_HSI:		USART16_kernel_frequency = HSI_clock_frequency; break;
-		case USART_CLK_SRC_CSI:		USART16_kernel_frequency = CSI_clock_frequency; break;
-		case USART_CLK_SRC_LSE:		USART16_kernel_frequency = LSE_clock_frequency; break;
+	RCC->SRDCCIPR &= ~RCC_SRDCCIPR_LPUART1SEL;
+	RCC->SRDCCIPR |=	lpuart1_src << RCC_SRDCCIPR_LPUART1SEL_Pos;
+	switch (usart169A_src) {
+		case USART_CLK_SRC_APBx:	USART169A_kernel_frequency = APB2_clock_frequency; break;		// APB2
+		case USART_CLK_SRC_PLL2_Q:	USART169A_kernel_frequency = PLL2_Q_clock_frequency; break;
+		case USART_CLK_SRC_PLL3_Q:	USART169A_kernel_frequency = PLL3_Q_clock_frequency; break;
+		case USART_CLK_SRC_HSI:		USART169A_kernel_frequency = HSI_clock_frequency; break;
+		case USART_CLK_SRC_CSI:		USART169A_kernel_frequency = CSI_clock_frequency; break;
+		case USART_CLK_SRC_LSE:		USART169A_kernel_frequency = LSE_clock_frequency; break;
 	}
 	switch (usart234578_src) {
 		case USART_CLK_SRC_APBx:	USART234578_kernel_frequency = APB1_clock_frequency; break;	// APB1

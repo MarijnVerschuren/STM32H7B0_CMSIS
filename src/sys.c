@@ -175,10 +175,10 @@ void sys_clock_init(SYS_CLK_Config_t* config) {
 	uint32_t clock_ready_mask;
 	uint32_t tmp_reg;
 	//!< check if current VOS level is stable
-	while (!(PWR->D3CR & PWR_D3CR_VOSRDY));
+	while (!(PWR->SRDCR & PWR_SRDCR_VOSRDY));
 	//!< configure CORE voltage scaling
 	PWR->CR3 |= PWR_CR3_BYPASS;
-	PWR->D3CR |= (config->CORE_VOS_level << PWR_D3CR_VOS_Pos);
+	PWR->SRDCR |= (config->CORE_VOS_level << PWR_SRDCR_VOS_Pos);
 	while ((PWR->CSR1 & PWR_CSR1_ACTVOS) != (config->CORE_VOS_level << PWR_CSR1_ACTVOS_Pos));  // wait until the power scaling level is applied
 	//!< enable and config base clocks
 	RCC->CR = (  // HSI is left on
@@ -297,16 +297,16 @@ void sys_clock_init(SYS_CLK_Config_t* config) {
 	);
 	while ((RCC->CR & clock_ready_mask) != clock_ready_mask);	// wait until all enabled PLL clocks are ready
 	//!< configure domain pre-scalars
-	RCC->D1CFGR = (
-		(config->SYS_CLK_prescaler << RCC_D1CFGR_D1CPRE_Pos)			|
-		(config->APB3_prescaler << RCC_D1CFGR_D1PPRE_Pos)				|
-		(config->AHB_prescaler << RCC_D1CFGR_HPRE_Pos)
+	RCC->CDCFGR1 = (
+		(config->SYS_CLK_prescaler << RCC_CDCFGR1_CDCPRE_Pos)			|
+		(config->APB3_prescaler << RCC_CDCFGR1_CDPPRE_Pos)				|
+		(config->AHB_prescaler << RCC_CDCFGR1_HPRE_Pos)
 	);
-	RCC->D2CFGR = (
-		(config->APB2_prescaler << RCC_D2CFGR_D2PPRE2_Pos)				|
-		(config->APB1_prescaler << RCC_D2CFGR_D2PPRE1_Pos)
+	RCC->CDCFGR2 = (
+		(config->APB2_prescaler << RCC_CDCFGR2_CDPPRE2_Pos)				|
+		(config->APB1_prescaler << RCC_CDCFGR2_CDPPRE1_Pos)
 	);
-	RCC->D3CFGR = (config->APB4_prescaler << RCC_D3CFGR_D3PPRE_Pos);
+	RCC->SRDCFGR = (config->APB4_prescaler << RCC_SRDCFGR_SRDPPRE_Pos);
 	//!< update frequency variables
 	if (config->SYS_CLK_prescaler & 0x8UL) {
 		if (config->SYS_CLK_prescaler & 0x4UL)	{ SYS_clock_frequency /= 0x4UL << (config->SYS_CLK_prescaler & 0x7UL); }
@@ -364,10 +364,10 @@ void sys_clock_init(SYS_CLK_Config_t* config) {
 	);
 	if (config->SYSTICK_IRQ_enable) { SCB->SHPR[(SysTick_IRQn & 0xFUL) - 4UL] = 0xF0UL; }	// set SysTick irq priority
 	//!< reset peripheral kernel clock config
-	RCC->D1CCIPR = config->PER_src << RCC_D1CCIPR_CKPERSEL_Pos;
-	RCC->D2CCIP1R =	0;
-	RCC->D2CCIP2R =	0;
-	RCC->D3CCIPR =	0;
+	RCC->CDCCIPR = config->PER_src << RCC_CDCCIPR_CKPERSEL_Pos;
+	RCC->CDCCIP1R =	0;
+	RCC->CDCCIP2R =	0;
+	RCC->SRDCCIPR =	0;
 	//!< update PER frequency variable
 	switch ((PER_SRC_t)config->PER_src) {
 		case PER_SRC_HSI:		PER_clock_frequency = HSI_clock_frequency; return;

@@ -122,7 +122,7 @@ typedef enum {
 /*!<
  * variables
  * */
-extern uint32_t USART16_kernel_frequency;
+extern uint32_t USART169A_kernel_frequency;
 extern uint32_t USART234578_kernel_frequency;
 extern uint32_t LPUART1_kernel_frequency;
 

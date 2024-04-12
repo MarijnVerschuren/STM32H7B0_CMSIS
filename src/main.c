@@ -11,26 +11,19 @@
 #include "mco.h"
 
 
-#if defined(STM32H7xx)
 SYS_CLK_Config_t* sys_config;
 // I2C_setting_t I2C_setting;  // TODO
 
 
 extern void TIM8_UP_TIM13_IRQHandler(void) {
 	TIM8->SR &= ~TIM_SR_UIF;  // clear interrupt flag
-	GPIO_toggle(GPIOA, 1);
+	GPIO_toggle(GPIOC, 1);
 }
 
-extern void EXTI3_IRQHandler(void) {	// button K1
-	EXTI->PR1 |= EXTI_PR1_PR3;  // clear interrupt flag
-	//start_TIM(TIM8);
-	GPIO_write(GPIOA, 1, 0);
-}
-
-extern void EXTI9_5_IRQHandler(void) {	// button K2
-	EXTI->PR1 |= EXTI_PR1_PR5;  // clear interrupt flag
+extern void EXTI15_10_IRQHandler(void) {	// button K2
+	EXTI->PR1 |= EXTI_PR1_PR13;  // clear interrupt flag
 	//stop_TIM(TIM8);
-	GPIO_write(GPIOA, 1, 1);
+	GPIO_toggle(GPIOC, 1);
 }
 
 
@@ -72,22 +65,20 @@ int main(void) {
 	sys_clock_init(sys_config);
 	/* TIM config */
 	config_TIM_kernel_clocks(
-			TIM_MUL_2, HRTIM_SRC_CPU, LPTIM_CLK_SRC_APBx,
+			TIM_MUL_2, LPTIM_CLK_SRC_APBx,
 			LPTIM_CLK_SRC_APBx, LPTIM_CLK_SRC_APBx
 	);
-	config_TIM(TIM8, TIM_APB2_kernel_frequency / 10000, 1000);  // 10 Hz
+	config_TIM(TIM8, TIM_APB2_kernel_frequency / 10000, 10000);  // 10 Hz
 	start_TIM_update_irq(TIM8);
 	start_TIM(TIM8);
 
 	/* GPIO config */
-	config_GPIO(GPIOA, 1, GPIO_output, GPIO_no_pull, GPIO_push_pull);	// user led D2
-	config_GPIO(GPIOE, 3, GPIO_input, GPIO_pull_up, GPIO_open_drain);	// user button K1
-	config_GPIO(GPIOC, 5, GPIO_input, GPIO_pull_up, GPIO_open_drain);	// user button K2
-	GPIO_write(GPIOA, 1, 1);
+	config_GPIO(GPIOC, 1, GPIO_output, GPIO_no_pull, GPIO_push_pull);	// user led D2
+	config_GPIO(GPIOC, 13, GPIO_input, GPIO_pull_up, GPIO_open_drain);	// user button K2
+	GPIO_write(GPIOC, 1, 1);
 
 	/* EXTI config */
-	config_EXTI(3, GPIOE, 1, 1);	start_EXTI(3);
-	config_EXTI(5, GPIOC, 1, 1);	start_EXTI(5);
+	config_EXTI(13, GPIOC, 1, 1);	start_EXTI(13);
 
 	/* MCO config */
 	config_MCO(MCO2_C9, MCO2_SRC_PLL1_P, 1);  // 400 MHz
@@ -126,7 +117,6 @@ int main(void) {
 	/* USB config */
 
 
-
 	// Watchdog config (32kHz / (4 << prescaler))
 	config_watchdog(0, 0xFFFUL);	// 1s
 	start_watchdog();
@@ -148,4 +138,19 @@ int main(void) {
 	//I2C_master_write_reg(I2C1, 0x50, 0x1234, I2C_REG_16, tx_data, 5, 100);
 	//I2C_master_read_reg(I2C1, 0x50, 0x1234, I2C_REG_16, rx_data, 5, 100);
 }
-#endif
+
+/*
+ *
+LED (blue) = PC1
+BOOT = SW1 = BOOT0
+RESET = SW2 = NRST
+SW3 = PC13
+TX device = USART1 PA9
+RX device = USART1 PA10
+USB D- = PA11
+USB D+ = PA12
+ */
+// p.g. 346 RCC diagram
+// TODO: RTC!!!
+// TODO: PWR_CR1_SVOS (stop mode VOS)
+// TODO: VBAT!!!

@@ -42,23 +42,6 @@
 	TIM17_BKIN_B5 =			0x05110032,
 	TIM17_BKIN_G6 =			0x06610032,
 */
-/* FLT, EEV
-	HRTIM_FLT1_A15 =		0,	// TODO
-	HRTIM_FLT4_B3 =			0,	// TODO
-	HRTIM_EEV6_B4 =			0,	// TODO
-	HRTIM_EEV7_B5 =			0,  // TODO
-	HRTIM_EEV8_B6 =			0,  // TODO
-	HRTIM_EEV9_B7 =			0,  // TODO
-	HRTIM_EEV1_C10 =		0,  // TODO
-	HRTIM_FLT2_C10 =		0,  // TODO
-	HRTIM_EEV2_C10 =		0,  // TODO
-	HRTIM_FLT3_D4 =			0,	// TODO
-	HRTIM_EEV3_D5 =			0,	// TODO
-	HRTIM_FLT5_G10 =		0,	// TODO
-	HRTIM_EEV4_G11 =		0,	// TODO
-	HRTIM_EEV5_G12 =		0,	// TODO
-	HRTIM_EEV10_G13 =		0	// TODO
-*/
 
 
 /*!<
@@ -68,11 +51,6 @@ typedef enum {
 	TIM_MUL_2 =					0b0,	//R
 	TIM_MUL_4 =					0b1
 } TIM_PRE_t;
-
-typedef enum {
-	HRTIM_SRC_APB2 =			0b0,	//R
-	HRTIM_SRC_CPU =				0b1
-} HRTIM_SRC_t;
 
 typedef enum {
 	LPTIM_CLK_SRC_APBx =		0b000,	//R
@@ -191,10 +169,9 @@ typedef enum {
  * */
 extern uint32_t TIM_APB1_kernel_frequency;
 extern uint32_t TIM_APB2_kernel_frequency;
-extern uint32_t HRTIM_kernel_frequency;
 extern uint32_t LPTIM1_kernel_frequency;
 extern uint32_t LPTIM2_kernel_frequency;
-extern uint32_t LPTIM345_kernel_frequency;
+extern uint32_t LPTIM3_kernel_frequency;
 
 
 /*!<
@@ -205,8 +182,8 @@ IRQn_Type TIM_to_IRQn(TIM_TypeDef* tim);
  * init
  * */
 void config_TIM_kernel_clocks(
-		TIM_PRE_t prescaler, HRTIM_SRC_t hrtim_src, LPTIM_CLK_SRC_t lptim1_src,
-		LPTIM_CLK_SRC_t lptim2_src, LPTIM_CLK_SRC_t lptim345_src
+		TIM_PRE_t prescaler, LPTIM_CLK_SRC_t lptim1_src,
+		LPTIM_CLK_SRC_t lptim2_src, LPTIM_CLK_SRC_t lptim3_src
 );
 void fconfig_TIM(
 		TIM_TypeDef* tim,				uint16_t prescaler,		uint32_t limit,
