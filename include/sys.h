@@ -160,9 +160,7 @@ typedef enum {
 //!< config struct
 typedef struct {
 	// PLL
-	PLL_CLK_Config_t	PLL1_config;
-	PLL_CLK_Config_t	PLL2_config;
-	PLL_CLK_Config_t	PLL3_config;
+	PLL_CLK_Config_t	PLL_config[3];
 	uint64_t			PLL_src					: 2;	// PLL_SRC_t
 	// RTC
 	uint64_t			RTC_enable				: 1;
@@ -251,35 +249,33 @@ extern void RCC_IRQHandler(void);
 /*!<
  * config functions
  * */
-SYS_CLK_Config_t* new_SYS_CLK_config(void);
 void set_PLL_config(
-	PLL_CLK_Config_t* config,				uint8_t enable,							uint8_t P_enable,
-	uint8_t Q_enable,						uint8_t R_enable,						uint8_t frac_enable,
-	PLL_IN_t input_range,					PLL_VCO_t VCO_range,					uint8_t M_factor,
-	uint8_t P_factor,						uint8_t Q_factor,						uint8_t R_factor,
-	uint16_t N_factor,						uint16_t N_fraction
+	uint8_t PLL_index,						uint8_t enable,
+	uint8_t P_enable,						uint8_t Q_enable,						uint8_t R_enable,
+	uint8_t frac_enable,					PLL_IN_t input_range,					PLL_VCO_t VCO_range,
+	uint8_t M_factor,						uint8_t P_factor,						uint8_t Q_factor,
+	uint8_t R_factor,						uint16_t N_factor,						uint16_t N_fraction
 );
 void set_RTC_config(
-	SYS_CLK_Config_t* config,				uint8_t RTC_enable,
-	RTC_SRC_t RTC_src,						uint8_t RTC_HSE_prescaler
+	uint8_t RTC_enable,						RTC_SRC_t RTC_src,						uint8_t RTC_HSE_prescaler
 );
 void set_clock_config(
-	SYS_CLK_Config_t* config,				uint8_t HSI_enable,						uint8_t HSE_enable,
+	uint8_t HSI_enable,						uint8_t HSE_enable,
 	uint8_t LSI_enable,						uint8_t LSE_enable,						uint8_t CSI_enable,
 	uint8_t HSI48_enable,					uint8_t HSI_enable_stop_mode,			uint8_t CSI_enable_stop_mode,
 	uint8_t HSE_CSS_enable,					uint8_t LSE_CSS_enable,					HSI_DIV_t HSI_div,
 	uint32_t HSE_freq,						PLL_SRC_t PLL_src
 );
 void set_SYS_config(
-	SYS_CLK_Config_t* config,				SYS_CLK_SRC_t SYS_CLK_src,				SYS_CLK_PRE_t SYS_CLK_prescaler,
+	SYS_CLK_SRC_t SYS_CLK_src,				SYS_CLK_PRE_t SYS_CLK_prescaler,
 	CORE_VOS_t CORE_VOS_level,				FLASH_LATENCY_t FLASH_latency
 );
 void set_domain_config(
-	SYS_CLK_Config_t* config,				AHB_CLK_PRE_t AHB_prescaler,			APB_CLK_PRE_t APB1_prescaler,
+	AHB_CLK_PRE_t AHB_prescaler,			APB_CLK_PRE_t APB1_prescaler,
 	APB_CLK_PRE_t APB2_prescaler,			APB_CLK_PRE_t APB3_prescaler,			APB_CLK_PRE_t APB4_prescaler
 );
 void set_systick_config(
-	SYS_CLK_Config_t* config,				uint8_t SYSTICK_enable,
+	uint8_t SYSTICK_enable,
 	uint8_t SYSTICK_IRQ_enable,				SYSTICK_CLK_SRC_t SYSTICK_CLK_src
 );
 
@@ -288,7 +284,7 @@ void set_systick_config(
  * init
  * */
 void IRQ_callback_init(IRQ_callback_t sys_tick_callback, IRQ_callback_t clock_fault_callback);
-void sys_clock_init(SYS_CLK_Config_t* config);
+void sys_clock_init();
 
 
 /*!<

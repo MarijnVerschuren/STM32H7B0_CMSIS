@@ -9,9 +9,10 @@
 #include "rng.h"
 #include "watchdog.h"
 #include "mco.h"
+#include "usb/usb.h"
+#include "usb/hid.h"
 
 
-SYS_CLK_Config_t* sys_config;
 // I2C_setting_t I2C_setting;  // TODO
 
 
@@ -29,40 +30,40 @@ extern void EXTI15_10_IRQHandler(void) {	// button K2
 
 int main(void) {
 	/* clock config */
-	sys_config = new_SYS_CLK_config();
 	set_PLL_config(
-			&sys_config->PLL1_config, 1, 1, 1, 0, 0,		// enable PLL1 (P, Q)
-			PLL_IN_8MHz_16MHz, PLL_VCO_WIDE,				// 12.5MHz in, 192MHz < VCO < 960MHz
-			2/*M*/, 2/*P*/, 4/*Q*/, 2/*R*/, 64/*N*/, 0		// M = 2, P = 2, Q = 4, R = 2, N = 64, N_frac = 0
-	);  // 25MHz / 2 * 64 / (2, 4, 2)	=>	(400Mhz, 200Mhz, *400Mhz)
+		0, 1, 1, 1, 0, 0,								// enable PLL1 (P, Q)
+		PLL_IN_4MHz_8MHz, PLL_VCO_WIDE,					// 5MHz in, 192MHz < VCO < 960MHz
+		5/*M*/, 2/*P*/, 4/*Q*/, 2/*R*/, 112/*N*/, 0		// M = 5, P = 2, Q = 2, R = 2, N = 112, N_frac = 0
+	);  // 25MHz / 5 * 112 / (2, 2, 2)	=>	(280Mhz, 280Mhz, *280Mhz)
 	set_PLL_config(
-			&sys_config->PLL2_config, 1, 1, 0, 1, 0,		// enable PLL2 (P, R)
-			PLL_IN_8MHz_16MHz, PLL_VCO_WIDE,				// 12.5MHz in, 192MHz < VCO < 960MHz
-			2/*M*/, 4/*P*/, 2/*Q*/, 4/*R*/, 64/*N*/, 0		// M = 2, P = 2, Q = 2, R = 2, N = 64, N_frac = 0
-	);  // 25MHz / 2 * 64 / (4, 2, 4)	=>	(200Mhz, *400Mhz, *200Mhz)
+		1, 0, 0, 0, 0, 0,								// disable PLL2
+		PLL_IN_4MHz_8MHz, PLL_VCO_WIDE,					// 5MHz in, 192MHz < VCO < 960MHz
+		5/*M*/, 2/*P*/, 4/*Q*/, 2/*R*/, 112/*N*/, 0		// M = 5, P = 2, Q = 2, R = 2, N = 112, N_frac = 0
+	);  // 25MHz / 5 * 112 / (2, 2, 2)	=>	(280Mhz, 280Mhz, *280Mhz)
 	set_PLL_config(
-			&sys_config->PLL3_config, 0, 0, 0, 0, 0,		// disable PLL3
-			PLL_IN_4MHz_8MHz, PLL_VCO_WIDE,
-			2/*M*/, 2/*P*/, 2/*Q*/, 2/*R*/, 64/*N*/, 0
-	);  // 25MHz / 2 * 64 / (2, 2, 2)	=>	(*400Mhz, *400Mhz, *400Mhz)
-	set_RTC_config(sys_config, 0, RCC_SRC_DISABLED, 0);		// disable RTC
+		2, 0, 0, 0, 0, 0,								// disable PLL3
+		PLL_IN_4MHz_8MHz, PLL_VCO_WIDE,					// 5MHz in, 192MHz < VCO < 960MHz
+		5/*M*/, 2/*P*/, 4/*Q*/, 2/*R*/, 112/*N*/, 0		// M = 5, P = 2, Q = 2, R = 2, N = 112, N_frac = 0
+	);  // 25MHz / 5 * 112 / (2, 2, 2)	=>	(280Mhz, 280Mhz, *280Mhz)
+	set_RTC_config(0, RCC_SRC_DISABLED, 0);				// disable RTC
 	set_clock_config(
-			sys_config, 0, 1, 0, 0, 0, 1,					// disable HSI, enable HSE, enable HSI48
-			0, 0, 1, 0, HSI_DIV_1, 25000000,				// enable HSE_CSS, HSE_freq = 25MHz
-			PLL_SRC_HSE										// set HSE as PLL source clock
+		0, 1, 0, 0, 0, 1,								// disable HSI, enable HSE, enable HSI48
+		0, 0, 1, 0, HSI_DIV_1, 25000000,				// enable HSE_CSS, HSE_freq = 25MHz
+		PLL_SRC_HSE										// set HSE as PLL source clock
 	);
 	set_SYS_config(
-			sys_config, SYS_CLK_SRC_PLL1_P, SYS_CLK_DIV_1,	// SYS_CLK = PLL1_P
-			CORE_VOS_1, FLASH_LATENCY3						// FLASH and PWR settings for AXI_freq = 200MHz, CORE_freq = 400MHz
+		SYS_CLK_SRC_PLL1_P, SYS_CLK_DIV_1,				// SYS_CLK = PLL1_P
+		CORE_VOS_1, FLASH_LATENCY3						// FLASH and PWR settings for AXI_freq = 280MHz, CORE_freq = 280MHz
 	);
 	set_domain_config(
-			sys_config, AHB_CLK_DIV_2, APB_CLK_DIV_2,		// AHB and AXI = 200MHz
-			APB_CLK_DIV_2, APB_CLK_DIV_2, APB_CLK_DIV_2		// APB1-4 = 100MHz
+		AHB_CLK_DIV_2, APB_CLK_DIV_2,					// AHB and AXI = 280MHz
+		APB_CLK_DIV_2, APB_CLK_DIV_2, APB_CLK_DIV_2		// APB1-4 = 140MHz
 	);
 	set_systick_config(
-			sys_config, 1, 1, SYSTICK_CLK_SRC_AXI_CLK_DIV_1	// SysTick (IRQ) enable at 200MHz
+		1, 1, SYSTICK_CLK_SRC_AXI_CLK_DIV_1				// SysTick (IRQ) enable at 280MHz
 	);
-	sys_clock_init(sys_config);
+	sys_clock_init();
+
 	/* TIM config */
 	config_TIM_kernel_clocks(
 			TIM_MUL_2, LPTIM_CLK_SRC_APBx,
@@ -115,20 +116,23 @@ int main(void) {
 
 
 	/* USB config */
+	config_USB_kernel_clock(USB_CLK_SRC_HSI48);
+	config_USB(USB1_OTG_HS, &HID_class, &FS_Desc, 0, 0);
+	start_USB(USB1_OTG_HS);
 
 
 	// Watchdog config (32kHz / (4 << prescaler))
-	config_watchdog(0, 0xFFFUL);	// 1s
-	start_watchdog();
+	//config_watchdog(0, 0xFFFUL);	// 1s
+	//start_watchdog();
 
 
-	uint8_t tx_data[5] = {0x50, 0x21, 0x85, 0xA3, 0x1C};
+	//uint8_t tx_data[5] = {0x50, 0x21, 0x85, 0xA3, 0x1C};
 	// main loop
 	for(;;) {
-		TIM1->CCR1 = (TIM1->CCR1 + 100) % 20000;
-		UART_print(USART1, "Hello World!\n", 100);
-		I2C_master_write_reg(I2C1, 0x50, 0x1234, I2C_REG_16, tx_data, 5, 100);
-		reset_watchdog();
+		//TIM1->CCR1 = (TIM1->CCR1 + 100) % 20000;
+		//UART_print(USART1, "Hello World!\n", 100);
+		//I2C_master_write_reg(I2C1, 0x50, 0x1234, I2C_REG_16, tx_data, 5, 100);
+		//reset_watchdog();
 	}
 
 
