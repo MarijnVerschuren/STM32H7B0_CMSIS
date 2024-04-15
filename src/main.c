@@ -11,9 +11,13 @@
 #include "mco.h"
 #include "usb/usb.h"
 #include "usb/hid.h"
+#include "hash.h"
 
 
 // I2C_setting_t I2C_setting;  // TODO
+
+uint8_t HID_buffer[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+volatile uint8_t GO = 0;
 
 
 extern void TIM8_UP_TIM13_IRQHandler(void) {
@@ -24,7 +28,7 @@ extern void TIM8_UP_TIM13_IRQHandler(void) {
 extern void EXTI15_10_IRQHandler(void) {	// button K2
 	EXTI->PR1 |= EXTI_PR1_PR13;  // clear interrupt flag
 	//stop_TIM(TIM8);
-	GPIO_toggle(GPIOC, 1);
+	GO = 1;
 }
 
 
@@ -79,10 +83,10 @@ int main(void) {
 	GPIO_write(GPIOC, 1, 1);
 
 	/* EXTI config */
-	config_EXTI(13, GPIOC, 1, 1);	start_EXTI(13);
+	config_EXTI(13, GPIOC, 0, 1);	start_EXTI(13);
 
 	/* MCO config */
-	config_MCO(MCO2_C9, MCO2_SRC_PLL1_P, 1);  // 400 MHz
+	config_MCO(MCO2_C9, MCO2_SRC_PLL1_P, 1);  // 280 MHz
 
 	/* PWM config */
 	config_PWM(TIM1_CH1_A8, TIM_APB2_kernel_frequency / 1000000, 20000);  // 50Hz
@@ -92,13 +96,18 @@ int main(void) {
 	config_CRC();
 
 	/* HASH config */
-	// TODO: [3]
+	config_HASH();  // TODO: endian-ness swap??
+	uint8_t data[] = {0x00, 0x00, 0x00, 'a'};
+	uint8_t key[] = {0x00, 0x00, 0x00, 'b'};
+	volatile uint32_t digest[8];
+	process_HMAC(data, 1, key, 1, HASH_ALGO_SHA2_256);
+	for (uint8_t i = 0; i < 8; i++) { digest[i] = ((__IO uint32_t*)HASH_digest)[i]; }
 
 	/* CRYP config */
 	// TODO: [4]
 
 	/* RNG config */
-	config_RNG_kernel_clock(RNG_CLK_SRC_PLL1_Q);  // 200 MHz
+	config_RNG_kernel_clock(RNG_CLK_SRC_PLL1_Q);  // 280 MHz
 
 	// TODO: [5]
 
@@ -117,22 +126,27 @@ int main(void) {
 
 	/* USB config */
 	config_USB_kernel_clock(USB_CLK_SRC_HSI48);
-	config_USB(USB1_OTG_HS, &HID_class, &FS_Desc, 0, 0);
+	config_USB(USB1_OTG_HS, &HID_class, &FS_Desc, 0, 0);  // TODO low power doesnt work!!
 	start_USB(USB1_OTG_HS);
 
 
-	// Watchdog config (32kHz / (4 << prescaler))
+	//Watchdog config (32kHz / (4 << prescaler))
 	//config_watchdog(0, 0xFFFUL);	// 1s
 	//start_watchdog();
 
 
-	//uint8_t tx_data[5] = {0x50, 0x21, 0x85, 0xA3, 0x1C};
+	uint8_t delay = 20;
 	// main loop
 	for(;;) {
-		//TIM1->CCR1 = (TIM1->CCR1 + 100) % 20000;
-		//UART_print(USART1, "Hello World!\n", 100);
-		//I2C_master_write_reg(I2C1, 0x50, 0x1234, I2C_REG_16, tx_data, 5, 100);
-		//reset_watchdog();
+		if (!GO) { continue; }
+
+		HID_buffer[2] = 0x4;
+		send_HID_report(&USB_handle, HID_buffer, 8);
+		delay_ms(delay);
+		HID_buffer[2] = 0;
+		send_HID_report(&USB_handle, HID_buffer, 8);
+
+		GO = 0;
 	}
 
 
@@ -158,3 +172,5 @@ USB D+ = PA12
 // TODO: RTC!!!
 // TODO: PWR_CR1_SVOS (stop mode VOS)
 // TODO: VBAT!!!
+
+// TODO: look at WKUPCR in PWR in USB wakup it

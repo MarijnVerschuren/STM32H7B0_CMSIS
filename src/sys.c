@@ -188,6 +188,14 @@ void sys_clock_init() {
 	//!< update base clock frequency variables
 	HSE_clock_frequency = sys_config.HSE_freq;
 	HSI_clock_frequency = 64000000 / (0b1UL << sys_config.HSI_div);
+	//!< switch back to HSI in case of wakeup event
+	if ((RCC->CFGR & RCC_CFGR_SWS) >> RCC_CFGR_SWS_Pos == SYS_CLK_SRC_PLL1_P) {
+		RCC->CFGR = (
+			(sys_config.RTC_HSE_prescaler << RCC_CFGR_RTCPRE_Pos)	|
+			(SYS_CLK_SRC_HSI << RCC_CFGR_SW_Pos)  // switch sys clock
+		);
+		while ((RCC->CFGR & RCC_CFGR_SWS) != (SYS_CLK_SRC_HSI << RCC_CFGR_SWS_Pos));
+	}
 	//!< disable PLL clocks before configuring
 	if (RCC->CR & RCC_CR_PLL3ON) { RCC->CR &= ~RCC_CR_PLL3ON; while (RCC->CR & RCC_CR_PLL3RDY); }
 	if (RCC->CR & RCC_CR_PLL2ON) { RCC->CR &= ~RCC_CR_PLL2ON; while (RCC->CR & RCC_CR_PLL2RDY); }

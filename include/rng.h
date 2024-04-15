@@ -29,6 +29,7 @@ extern uint32_t RNG_kernel_frequency;
  * init
  * */
 void config_RNG_kernel_clock(RNG_CLK_SRC_t src);
+void config_RNG(void);
 
 
 #endif //STM32H_CMSIS_RNG_H

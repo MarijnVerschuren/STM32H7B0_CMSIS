@@ -8,6 +8,7 @@
  * defines
  * */
 #define inline __attribute__((always_inline))
+#define USB_OTG_HS_WAKEUP_EXTI_LINE	(0x1U << 11)
 
 
 /*!<
@@ -635,7 +636,7 @@ static inline void USB_suspend_IRQ(USB_handle_t* handle) {
 		handle->dev_state = DEV_STATE_SUSPENDED;
 		*PCGCCTL |= USB_OTG_PCGCCTL_STOPCLK;
 		if (handle->config.low_power_enable) {
-			SCB->SCR |= (uint32_t)((uint32_t)(SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk));
+			SCB->SCR |= (SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk);
 		}
 	}
 	usb->GINTSTS |= USB_OTG_GINTSTS_USBSUSP;
@@ -1027,16 +1028,17 @@ static inline void USB_common_handler(USB_handle_t* handle) {
 	/* wake-up interrupt */
 	if (irqs & USB_OTG_GINTSTS_WKUINT)					{ USB_wake_up_IRQ(handle); }
 }
+// TODO: doesnt work!
 static inline void USB_wakeup_handler(USB_handle_t* handle) {
 	USB_OTG_GlobalTypeDef*	usb =		handle->instance;
 	__IO uint32_t*			PCGCCTL =	(void*)(((uint32_t)usb) + USB_OTG_PCGCCTL_BASE);
 	if (handle->config.low_power_enable) {
-		SCB->SCR &= (uint32_t)~((uint32_t)(SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk));
+		SCB->SCR &= ~(SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk);
 		sys_clock_init();
 	}
 	*PCGCCTL &= ~(USB_OTG_PCGCCTL_STOPCLK);
-	EXTI->PR1 |= EXTI_PR1_PR18;  // USB FS EXTI line TODO: modular
-}
+	//EXTI_D1->PR2 |= USB_OTG_HS_WAKEUP_EXTI_LINE;
+} // TODO: /
 
 
 /*!<

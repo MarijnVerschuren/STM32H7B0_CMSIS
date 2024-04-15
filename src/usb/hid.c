@@ -10,7 +10,7 @@
  * */
 #define HID_IEP							0x01U
 #define HID_MPS							0x04U
-#define HID_FS_INTERVAL					0xAU
+#define HID_FS_INTERVAL					0x1U
 
 #define HID_CONFIG_DESCRIPTOR_SIZE		34U
 #define HID_DESCRIPTOR_SIZE				9U
@@ -82,7 +82,7 @@ typedef struct {
 	0x03,                                               /* bmAttributes: Interrupt endpoint */
 	HID_MPS,                               		        /* wMaxPacketSize: 4 Bytes max */
 	0x00,
-		HID_FS_INTERVAL,                                  /* bInterval: Polling Interval */
+	HID_FS_INTERVAL,                                  /* bInterval: Polling Interval */
 };
  static uint8_t HID_keyboard_report_descriptor[HID_REPORT_DESCRIPTOR_SIZE]  = {
 	0x05, 0x01,                    // USAGE_PAGE (Generic Desktop)

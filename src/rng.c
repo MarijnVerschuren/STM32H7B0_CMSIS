@@ -24,3 +24,7 @@ void config_RNG_kernel_clock(RNG_CLK_SRC_t src) {
 		case RNG_CLK_SRC_LSI:		RNG_kernel_frequency = LSI_clock_frequency; return;
 	}
 }
+void config_RNG(void) {
+	RCC->AHB2ENR |= RCC_AHB2ENR_RNGEN;
+
+}

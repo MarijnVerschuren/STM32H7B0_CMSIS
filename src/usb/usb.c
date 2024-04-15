@@ -7,7 +7,7 @@
 /*!<
  * defines
  * */
-#define USB_OTG_HS_WAKEUP_EXTI_LINE	(0x1U << 18)  /*!< USB FS EXTI Line WakeUp Interrupt */
+#define USB_OTG_HS_WAKEUP_EXTI_LINE	(0x1U << 11)
 
 
 /*!<
@@ -97,8 +97,9 @@ void config_USB(
 	uint32_t prioritygroup = NVIC_GetPriorityGrouping();
 	NVIC_SetPriority(OTG_HS_IRQn, NVIC_EncodePriority(prioritygroup, 0, 0));
 	NVIC_EnableIRQ(OTG_HS_IRQn);
+	// TODO: doesnt work!
 	if(USB_handle.config.low_power_enable == 1) {
-		EXTI_D1->IMR2 |= USB_OTG_HS_WAKEUP_EXTI_LINE;
+		//EXTI_D1->IMR2 |= USB_OTG_HS_WAKEUP_EXTI_LINE;
 		NVIC_SetPriority(OTG_HS_WKUP_IRQn, NVIC_EncodePriority(prioritygroup, 0, 0));
 		NVIC_EnableIRQ(OTG_HS_WKUP_IRQn);
 	}
