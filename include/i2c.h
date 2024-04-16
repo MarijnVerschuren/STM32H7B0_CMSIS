@@ -59,7 +59,7 @@ typedef enum {
 } I2C_register_address_t;
 
 typedef struct {
-	uint8_t prescaler;
+	uint32_t I2C_clock_frequency;
 	uint8_t scl_l_pre;
 	uint8_t scl_h_pre;
 	uint8_t sda_delay;

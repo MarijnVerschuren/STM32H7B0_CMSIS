@@ -17,8 +17,6 @@ typedef enum {
 /*!<
  * helpers
  * */
-uint8_t I2C_num(I2C_TypeDef* i2c) { dev_id_t id = dev_to_id(i2c); return id.clk ? id.num - 4 : id.num - 21; }
-
 void reset_tx(I2C_TypeDef* i2c) {
 	i2c->CR2 &= ~(
 		I2C_CR2_SADD        |
@@ -58,7 +56,6 @@ uint8_t config_tx_size(I2C_TypeDef* i2c, uint32_t* size) {
  * */
 uint32_t I2C123_kernel_frequency =			0;
 uint32_t I2C4_kernel_frequency =			0;
-uint32_t I2C_peripheral_frequencies[4] = 	{0, 0, 0, 0};
 
 
 /*!<
@@ -96,17 +93,16 @@ void fconfig_I2C(I2C_GPIO_t scl, I2C_GPIO_t sda, I2C_setting_t setting, uint16_t
 	enable_dev(i2c);
 	fconfig_GPIO(scl_port, scl_pin.num, GPIO_alt_func, GPIO_pull_up, GPIO_open_drain, GPIO_high_speed, scl_pin.alt);
 	fconfig_GPIO(sda_port, sda_pin.num, GPIO_alt_func, GPIO_pull_up, GPIO_open_drain, GPIO_high_speed, sda_pin.alt);
-	uint8_t i2c_num = I2C_num(i2c);
 
 	uint32_t ker_clk_freq = 0;
 	switch (scl_pin.id.clk) {
 		case DEV_CLOCK_ID_APB1:			ker_clk_freq = I2C123_kernel_frequency;	break;
 		case DEV_CLOCK_ID_APB4:			ker_clk_freq = I2C4_kernel_frequency;	break;
-	} I2C_peripheral_frequencies[i2c_num] = ker_clk_freq / setting.prescaler;
+	}
 
 	i2c->CR1 = 0;  // make sure I2C is off
 	i2c->TIMINGR = (
-		(setting.prescaler << I2C_TIMINGR_PRESC_Pos)	|
+		((ker_clk_freq / setting.I2C_clock_frequency) << I2C_TIMINGR_PRESC_Pos)	|
 		(setting.scl_delay << I2C_TIMINGR_SCLDEL_Pos)	|
 		(setting.sda_delay << I2C_TIMINGR_SDADEL_Pos)	|
 		(setting.scl_h_pre << I2C_TIMINGR_SCLH_Pos)		|

@@ -14,7 +14,7 @@
 /*!<
  * static
  * */
-static inline void set_AES_key(void* key, CRYP_KEY_t key_type) {
+static inline void set_AES_key(const void* key, CRYP_KEY_t key_type) {
 	CRYP->K3RR = ((uint32_t*)key)[0];
 	CRYP->K3LR = ((uint32_t*)key)[1];
 	CRYP->K2RR = ((uint32_t*)key)[2];
@@ -28,7 +28,7 @@ static inline void set_AES_key(void* key, CRYP_KEY_t key_type) {
 	}}
 }
 
-static inline void set_AES_IV(void* IV) {
+static inline void set_AES_IV(const void* IV) {
 	CRYP->IV0LR = ((uint32_t*)IV)[0];
 	CRYP->IV0RR = ((uint32_t*)IV)[1];
 	CRYP->IV1LR = ((uint32_t*)IV)[2];
@@ -43,7 +43,7 @@ void config_CRYP(void) {
 	RCC->AHB2ENR |= RCC_AHB2ENR_CRYPEN;
 }
 
-void AES_CBC_encrypt_setup(void* iv, void* key, CRYP_KEY_t key_type) {
+void AES_CBC_encrypt_setup(const void* iv, const void* key, CRYP_KEY_t key_type) {
 	CRYP->CR = (CRYP_CR_ALGOMODE_AES_CBC | (key_type << CRYP_CR_KEYSIZE_Pos));
 
 	set_AES_key(key, key_type);
@@ -53,7 +53,7 @@ void AES_CBC_encrypt_setup(void* iv, void* key, CRYP_KEY_t key_type) {
 	CRYP->CR |= CRYP_CR_FFLUSH | CRYP_CR_CRYPEN;
 }
 
-void AES_CBC_decrypt_setup(void* iv, void* key, CRYP_KEY_t key_type) {
+void AES_CBC_decrypt_setup(const void* iv, const void* key, CRYP_KEY_t key_type) {
 	CRYP->CR = (
 		CRYP_CR_ALGOMODE_AES_KEY | CRYP_CR_ALGODIR |
 		(key_type << CRYP_CR_KEYSIZE_Pos)
@@ -73,7 +73,7 @@ void AES_CBC_decrypt_setup(void* iv, void* key, CRYP_KEY_t key_type) {
 /*!<
  * init
  * */
-void AES_CBC_process_block(void* buffer, void* out) {
+void AES_CBC_process_block(const void* buffer, void* out) {
 	while (!(CRYP->SR & CRYP_SR_IFEM));
 	CRYP->DIN = ((uint32_t*)buffer)[0];
 	CRYP->DIN = ((uint32_t*)buffer)[1];

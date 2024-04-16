@@ -27,14 +27,14 @@ typedef enum {
  * init
  * */
 void config_CRYP(void);
-void AES_CBC_encrypt_setup(void* IV, void* key, CRYP_KEY_t key_type);
-void AES_CBC_decrypt_setup(void* IV, void* key, CRYP_KEY_t key_type);
+void AES_CBC_encrypt_setup(const void* IV, const void* key, CRYP_KEY_t key_type);
+void AES_CBC_decrypt_setup(const void* IV, const void* key, CRYP_KEY_t key_type);
 
 
 /*!<
  * usage
  * */
-void AES_CBC_process_block(void* buffer, void* out);
+void AES_CBC_process_block(const void* buffer, void* out);
 
 
 #endif // STM32H7B0_CMSIS_CRYP_H
