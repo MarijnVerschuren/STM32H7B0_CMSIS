@@ -5,15 +5,16 @@
 #include "cryp.h"
 
 
+/*!<
+ * defines
+ * */
 #define inline __attribute__((always_inline))
 
 
 /*!<
  * static
  * */
-static inline void set_AES_key(void* key) {
-	CRYP_KEY_t key_type = (CRYP->CR & CRYP_CR_KEYSIZE) >> CRYP_CR_KEYSIZE;
-
+static inline void set_AES_key(void* key, CRYP_KEY_t key_type) {
 	CRYP->K3RR = ((uint32_t*)key)[0];
 	CRYP->K3LR = ((uint32_t*)key)[1];
 	CRYP->K2RR = ((uint32_t*)key)[2];
@@ -38,63 +39,49 @@ static inline void set_AES_IV(void* IV) {
 /*!<
  * init
  * */
-void config_CRYP(CRYP_ALGO_t algorithm, CRYP_KEY_t key_type) {
+void config_CRYP(void) {
 	RCC->AHB2ENR |= RCC_AHB2ENR_CRYPEN;
-	CRYP->CR = (algorithm | (key_type << CRYP_CR_KEYSIZE_Pos));
 }
-void CRYP_encrypt_setup(void* IV, void* key) {
-	CRYP->CR &= ~CRYP_CR_ALGODIR;
-	CRYP_ALGO_t algo = CRYP->CR & CRYP_CR_ALGOMODE;
-	if (algo & 0x80000UL) {		// AES_GCM, AES_CCM
-								// TODO!!
-	} else if (algo & 0x20UL) {	// AES
-		set_AES_key(key);
-		set_AES_IV(IV);
-	} else {					// (T)DES
-								// TODO!!
-	}
+
+void AES_CBC_encrypt_setup(void* iv, void* key, CRYP_KEY_t key_type) {
+	CRYP->CR = (CRYP_CR_ALGOMODE_AES_CBC | (key_type << CRYP_CR_KEYSIZE_Pos));
+
+	set_AES_key(key, key_type);
+	set_AES_IV(iv);
+
 	// flush in and out FIFOs
 	CRYP->CR |= CRYP_CR_FFLUSH | CRYP_CR_CRYPEN;
 }
 
-void CRYP_decrypt_setup(void* IV, void* key) {
-	CRYP->CR |= CRYP_CR_ALGODIR;
-	CRYP_ALGO_t algo = CRYP->CR & CRYP_CR_ALGOMODE;
-	if (algo & 0x80000UL) {		// AES_GCM, AES_CCM
-								// TODO!!
-	} else if (algo & 0x20UL) {	// AES
-		CRYP->CR = ((CRYP->CR & ~CRYP_CR_ALGOMODE) | CRYP_CR_ALGOMODE_AES_KEY);
-		set_AES_key(key);
-		CRYP->CR |= CRYP_CR_CRYPEN;
-		while (CRYP->SR & CRYP_SR_BUSY);
-		CRYP->CR = ((CRYP->CR & ~CRYP_CR_ALGOMODE) | algo);
-		set_AES_IV(IV);
-	} else {					// (T)DES
-								// TODO!!
-	}
+void AES_CBC_decrypt_setup(void* iv, void* key, CRYP_KEY_t key_type) {
+	CRYP->CR = (
+		CRYP_CR_ALGOMODE_AES_KEY | CRYP_CR_ALGODIR |
+		(key_type << CRYP_CR_KEYSIZE_Pos)
+	);
+
+	set_AES_key(key, key_type);
+	CRYP->CR |= CRYP_CR_CRYPEN;
+	while (CRYP->SR & CRYP_SR_BUSY);
+	CRYP->CR = ((CRYP->CR & ~CRYP_CR_ALGOMODE) | CRYP_CR_ALGOMODE_AES_CBC);
+	set_AES_IV(iv);
+
+	// flush in and out FIFOs
 	CRYP->CR |= CRYP_CR_FFLUSH | CRYP_CR_CRYPEN;
 }
-// CRYP_CR_ALGOMODE_AES_KEY
+
 
 /*!<
  * init
  * */
-void CRYP_process_block(void* buffer, uint32_t size, void* out) {
-	CRYP_ALGO_t algo = CRYP->CR & CRYP_CR_ALGOMODE;
-	if (algo & 0x80000UL) {		// AES_GCM, AES_CCM
-								// TODO!!
-	} else if (algo & 0x20UL) {	// AES
-		while (!(CRYP->SR & CRYP_SR_IFEM));
-		CRYP->DIN = ((uint32_t*)buffer)[0];
-		CRYP->DIN = ((uint32_t*)buffer)[1];
-		CRYP->DIN = ((uint32_t*)buffer)[2];
-		CRYP->DIN = ((uint32_t*)buffer)[3];
-		while (!(CRYP->SR & CRYP_SR_OFNE));
-		((uint32_t*)out)[0] = CRYP->DOUT;
-		((uint32_t*)out)[1] = CRYP->DOUT;
-		((uint32_t*)out)[2] = CRYP->DOUT;
-		((uint32_t*)out)[3] = CRYP->DOUT;
-	} else {					// (T)DES
-								// TODO!!
-	}
+void AES_CBC_process_block(void* buffer, void* out) {
+	while (!(CRYP->SR & CRYP_SR_IFEM));
+	CRYP->DIN = ((uint32_t*)buffer)[0];
+	CRYP->DIN = ((uint32_t*)buffer)[1];
+	CRYP->DIN = ((uint32_t*)buffer)[2];
+	CRYP->DIN = ((uint32_t*)buffer)[3];
+	while (!(CRYP->SR & CRYP_SR_OFNE));
+	((uint32_t*)out)[0] = CRYP->DOUT;
+	((uint32_t*)out)[1] = CRYP->DOUT;
+	((uint32_t*)out)[2] = CRYP->DOUT;
+	((uint32_t*)out)[3] = CRYP->DOUT;
 }

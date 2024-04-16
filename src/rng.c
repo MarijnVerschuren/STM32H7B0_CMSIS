@@ -6,6 +6,15 @@
 
 
 /*!<
+ * defines
+ * */  // these are recommended configurations from the datasheet
+#define RNG_CONFIG_1 0x18UL
+#define RNG_CONFIG_2 0x00UL
+#define RNG_CONFIG_3 0x00UL
+#define RNG_CONFIG_HTCR 0x000072ACUL
+
+
+/*!<
  * variables
  * */
 uint32_t RNG_kernel_frequency = 0;
@@ -24,7 +33,28 @@ void config_RNG_kernel_clock(RNG_CLK_SRC_t src) {
 		case RNG_CLK_SRC_LSI:		RNG_kernel_frequency = LSI_clock_frequency; return;
 	}
 }
-void config_RNG(void) {
-	RCC->AHB2ENR |= RCC_AHB2ENR_RNGEN;
 
+
+/*!<
+ * usage
+ * */
+void start_RNG(void) {
+	RCC->AHB2ENR |= RCC_AHB2ENR_RNGEN;
+	RNG->CR = (
+		RNG_CR_CONDRST								|
+		(RNG_CONFIG_1 << RNG_CR_RNG_CONFIG1_Pos)	|
+		(RNG_CONFIG_2 << RNG_CR_RNG_CONFIG2_Pos)	|
+		(RNG_CONFIG_3 << RNG_CR_RNG_CONFIG3_Pos)
+	);
+	RNG->CR = ((RNG->CR & ~RNG_CR_CONDRST) | RNG_CR_RNGEN);
+}
+
+void stop_RNG(void) {
+	RNG->CR &= ~RNG_CR_CONDRST;
+}
+
+uint32_t RNG_generate(void) {
+	while (RNG->SR & (RNG_SR_SECS | RNG_SR_CECS));
+	while (!(RNG->SR & RNG_SR_DRDY));
+	return RNG->DR;
 }

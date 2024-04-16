@@ -84,7 +84,8 @@ int main(void) {
 	GPIO_write(GPIOC, 1, 1);
 
 	/* EXTI config */
-	config_EXTI(13, GPIOC, 0, 1);	start_EXTI(13);
+	config_EXTI(13, GPIOC, 0, 1);
+	start_EXTI(13);
 
 	/* MCO config */
 	config_MCO(MCO2_C9, MCO2_SRC_PLL1_P, 1);  // 280 MHz
@@ -97,20 +98,14 @@ int main(void) {
 	config_CRC();
 
 	/* HASH config */
-	config_HASH();  // TODO: endian-ness swap??
-	uint8_t hash_data[] = {0x00, 0x00, 0x00, 'a'};
-	uint8_t hash_key[] = {0x00, 0x00, 0x00, 'b'};
-	volatile uint32_t digest[8];
-	process_HMAC(hash_data, 1, hash_key, 1, HASH_ALGO_SHA2_256);
-	for (uint8_t i = 0; i < 8; i++) { digest[i] = ((__IO uint32_t*)HASH_digest)[i]; }
+	config_HASH();
 
 	/* CRYP config */
-	config_CRYP(CRYP_ALGO_AES_CBC, CRYP_KEY_128);
+	config_CRYP();
 
 	/* RNG config */
-	config_RNG_kernel_clock(RNG_CLK_SRC_PLL1_Q);  // 280 MHz
-
-	// TODO: [5]
+	config_RNG_kernel_clock(RNG_CLK_SRC_HSI48);
+	start_RNG();
 
 	/* UART config */
 	config_USART_kernel_clocks(USART_CLK_SRC_APBx, USART_CLK_SRC_APBx, USART_CLK_SRC_APBx);
@@ -136,7 +131,17 @@ int main(void) {
 	//start_watchdog();
 
 
+	uint8_t hash_data[] = {0x00, 0x00, 0x00, 'a'};	// TODO: endian-ness swap??
+	uint8_t hash_key[] = {0x00, 0x00, 0x00, 'b'};	// TODO: endian-ness swap??
+	volatile uint32_t digest[8];
+	process_HMAC(hash_data, 1, hash_key, 1, HASH_ALGO_SHA2_256);
+	for (uint8_t i = 0; i < 8; i++) { digest[i] = ((__IO uint32_t*)HASH_digest)[i]; }
+
+
 	uint8_t delay = 20;
+
+	uint32_t rn = RNG_generate();
+	(void)rn;
 
 	uint8_t cryp_data[128] = "When I was, a young boy, my father, took me into the city to see a marching band. He said: Son,if you read this. Vouw bak -Cdirk";
 	uint8_t cryp_key[16] = "ENC_KEY!!";	// TODO: UUID into key
@@ -148,6 +153,7 @@ int main(void) {
 	};
 
 	uint8_t rom_enc[128];
+	uint8_t rom_enc2[128];
 	uint8_t rom_data[128];
 	for (uint8_t i = 0; i < 128; i++) { rom_data[i] = 0; }
 	// main loop
@@ -164,23 +170,18 @@ int main(void) {
 		*/
 
 		/*  ROM */
-		/*
-		CRYP_encrypt_setup(cryp_IV, cryp_key);
+		AES_CBC_encrypt_setup(cryp_IV, cryp_key, CRYP_KEY_128);
 		for (uint8_t i = 0; i < 8; i++) {
-			CRYP_process_block(&cryp_data[i * 16], 16, &rom_enc[i * 16]);
+			AES_CBC_process_block(&cryp_data[i * 16], &rom_enc[i * 16]);
 		}
-		CRYP->CR &= ~CRYP_CR_CRYPEN;
-		I2C_master_write_reg(I2C3, 0x50, 0x1234, I2C_REG_16, rom_enc, 128, 100);
-		*/
+		//I2C_master_write_reg(I2C3, 0x50, 0x1234, I2C_REG_16, rom_enc, 128, 100);
 
-		/*
-		I2C_master_read_reg(I2C3, 0x50, 0x1234, I2C_REG_16, rom_enc, 128, 100);
-		CRYP_decrypt_setup(cryp_IV, cryp_key);
+		I2C_master_read_reg(I2C3, 0x50, 0x1234, I2C_REG_16, rom_enc2, 128, 100);
+		AES_CBC_decrypt_setup(cryp_IV, cryp_key, CRYP_KEY_128);
 		for (uint8_t i = 0; i < 8; i++) {
-			CRYP_process_block(&rom_enc[i * 16], 16, &rom_data[i * 16]);
+			AES_CBC_process_block(&rom_enc2[i * 16], &rom_data[i * 16]);
 		}
-		CRYP->CR &= ~CRYP_CR_CRYPEN;
-		*/
+
 
 		GO = 0;
 	}

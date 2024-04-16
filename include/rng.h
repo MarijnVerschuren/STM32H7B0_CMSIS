@@ -32,4 +32,12 @@ void config_RNG_kernel_clock(RNG_CLK_SRC_t src);
 void config_RNG(void);
 
 
+/*!<
+ * usage
+ * */
+void start_RNG(void);
+void stop_RNG(void);
+uint32_t RNG_generate(void);
+
+
 #endif //STM32H_CMSIS_RNG_H
