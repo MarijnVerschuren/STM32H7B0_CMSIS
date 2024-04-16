@@ -8,7 +8,7 @@
 
 
 /*!<
- * types
+ * enum types
  * */
 typedef enum {
 	HASH_ALGO_SHA1 =		0x000UL,
