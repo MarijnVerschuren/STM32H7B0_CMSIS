@@ -11,6 +11,12 @@
 
 /*!<
  * types
+ * */  // TODO: configurable
+#define I2C_HOLD_OFF_TIME 10U
+
+
+/*!<
+ * types
  * */
 typedef enum {
 	I2C_CLK_SRC_APBx =		0b00,	//R

@@ -52,6 +52,12 @@ uint8_t config_tx_size(I2C_TypeDef* i2c, uint32_t* size) {
 
 
 /*!<
+ * static variables
+ * */
+static uint64_t last = 0;
+
+
+/*!<
  * variables
  * */
 uint32_t I2C123_kernel_frequency =			0;
@@ -135,6 +141,7 @@ void config_I2C(I2C_GPIO_t scl, I2C_GPIO_t sda, I2C_setting_t setting, uint8_t o
  * master io
  * */
 uint32_t I2C_master_write(I2C_TypeDef* i2c, uint16_t i2c_address, const uint8_t* buffer, uint32_t size, uint32_t timeout) {  // -> n unprocessed
+	while (tick - last < I2C_HOLD_OFF_TIME);
 	uint64_t start = tick;
 	reset_tx(i2c);
 
@@ -144,20 +151,21 @@ uint32_t I2C_master_write(I2C_TypeDef* i2c, uint16_t i2c_address, const uint8_t*
 	i2c->CR2 |= I2C_CR2_START;
 
 	while (n_bytes--) {
-	 	while (!(i2c->ISR & I2C_ISR_TXIS)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; return size + n_bytes; } }
+	 	while (!(i2c->ISR & I2C_ISR_TXIS)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; last = tick; return size + n_bytes; } }
 		i2c->TXDR = *buffer++;
 		if (!n_bytes && size) {
-			while (!(i2c->ISR & I2C_ISR_TCR)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; return size + n_bytes; } }
+			while (!(i2c->ISR & I2C_ISR_TCR)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; last = tick; return size + n_bytes; } }
 			n_bytes = config_tx_size(i2c, &size);
 		}
 	}
 
-	while (!(i2c->ISR & I2C_ISR_STOPF)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; return 0; } }
+	while (!(i2c->ISR & I2C_ISR_STOPF)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; last = tick; return 0; } }
 	i2c->ICR |= I2C_ICR_STOPCF;  // clear stop flag
-	return 0;
+	last = tick; return 0;
 }
 
 uint32_t I2C_master_read(I2C_TypeDef* i2c, uint16_t i2c_address, uint8_t* buffer, uint32_t size, uint32_t timeout) {  // -> n unprocessed
+	while (tick - last < I2C_HOLD_OFF_TIME);
 	uint64_t start = tick;
 	reset_tx(i2c);
 
@@ -167,17 +175,17 @@ uint32_t I2C_master_read(I2C_TypeDef* i2c, uint16_t i2c_address, uint8_t* buffer
 	i2c->CR2 |= I2C_CR2_START;
 
 	while (n_bytes--) {
-		while (!(i2c->ISR & I2C_ISR_RXNE)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; return size + n_bytes; } }
+		while (!(i2c->ISR & I2C_ISR_RXNE)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; last = tick; return size + n_bytes; } }
 		*buffer++ = i2c->RXDR;
 		if (!n_bytes && size) {
-			while (!(i2c->ISR & I2C_ISR_TCR)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; return size + n_bytes; } }
+			while (!(i2c->ISR & I2C_ISR_TCR)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; last = tick; return size + n_bytes; } }
 			n_bytes = config_tx_size(i2c, &size);
 		}
 	}
 
-	while (!(i2c->ISR & I2C_ISR_STOPF)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; return 0; } }
+	while (!(i2c->ISR & I2C_ISR_STOPF)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; last = tick; return 0; } }
 	i2c->ICR |= I2C_ICR_STOPCF;  // clear stop flag
-	return 0;
+	last = tick; return 0;
 }
 
 uint32_t I2C_master_write_reg(
@@ -185,6 +193,7 @@ uint32_t I2C_master_write_reg(
 	I2C_register_address_t reg_address_type, const uint8_t* buffer,
 	uint32_t size, uint32_t timeout
 ) {  // -> n unprocessed
+	while (tick - last < I2C_HOLD_OFF_TIME);
 	uint64_t start = tick;
 	reset_tx(i2c);
 
@@ -195,22 +204,22 @@ uint32_t I2C_master_write_reg(
 	i2c->CR2 |= I2C_CR2_START;
 
 	while (reg_address_size--) {
-		while (!(i2c->ISR & I2C_ISR_TXIS)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; return size + n_bytes; } }
+		while (!(i2c->ISR & I2C_ISR_TXIS)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; last = tick; return size + n_bytes; } }
 		i2c->TXDR = (reg_address >> (8 * reg_address_size)) & 0xFFU;
 	}
 
 	while (n_bytes--) {
-		while (!(i2c->ISR & I2C_ISR_TXIS)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; return size + n_bytes; } }
+		while (!(i2c->ISR & I2C_ISR_TXIS)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; last = tick; return size + n_bytes; } }
 		i2c->TXDR = *buffer++;
 		if (!n_bytes && size) {
-			while (!(i2c->ISR & I2C_ISR_TCR)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; return size + n_bytes; } }
+			while (!(i2c->ISR & I2C_ISR_TCR)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; last = tick; return size + n_bytes; } }
 			n_bytes = config_tx_size(i2c, &size);
 		}
 	}
 
-	while (!(i2c->ISR & I2C_ISR_STOPF)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; return 0; } }
+	while (!(i2c->ISR & I2C_ISR_STOPF)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; last = tick; return 0; } }
 	i2c->ICR |= I2C_ICR_STOPCF;  // clear stop flag
-	return 0;
+	last = tick; return 0;
 }
 
 uint32_t I2C_master_read_reg(
@@ -218,6 +227,7 @@ uint32_t I2C_master_read_reg(
 	I2C_register_address_t reg_address_type, uint8_t* buffer,
 	uint32_t size, uint32_t timeout
 ) {  // -> n unprocessed
+	while (tick - last < I2C_HOLD_OFF_TIME);
 	uint64_t start = tick;
 	reset_tx(i2c);
 
@@ -228,11 +238,11 @@ uint32_t I2C_master_read_reg(
 	i2c->CR2 |= I2C_CR2_START;
 
 	while (reg_address_size--) {
-		while (!(i2c->ISR & I2C_ISR_TXIS)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; return size; } }
+		while (!(i2c->ISR & I2C_ISR_TXIS)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; last = tick; return size; } }
 		i2c->TXDR = (reg_address >> (8 * reg_address_size)) & 0xFFU;
 	}
 
-	while (!(i2c->ISR & I2C_ISR_STOPF)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; return 0; } }
+	while (!(i2c->ISR & I2C_ISR_STOPF)) { if (tick - start > timeout) { i2c->CR2 |= I2C_CR2_STOP; last = tick; return 0; } }
 	i2c->ICR |= I2C_ICR_STOPCF;  // clear stop flag
 
 	return I2C_master_read(i2c, i2c_address, buffer, size, timeout - (tick - start));
