@@ -12,13 +12,6 @@
  * types
  * */
 typedef enum {
-	OSPI_CLK_SRC_AHB =			0b00,	//R
-	OSPI_CLK_SRC_PLL1_Q =		0b01,
-	OSPI_CLK_SRC_PLL2_R =		0b10,
-	OSPI_CLK_SRC_PER =			0b11
-} OSPI_CLK_SRC_t;
-
-typedef enum {
 	SPI456_CLK_SRC_APBx =		0b000,	//R
 	SPI456_CLK_SRC_PLL2_Q =		0b001,
 	SPI456_CLK_SRC_PLL3_Q =		0b010,
@@ -42,7 +35,6 @@ typedef enum {
 extern uint32_t SPI123_kernel_frequency;
 extern uint32_t SPI45_kernel_frequency;
 extern uint32_t SPI6_kernel_frequency;
-extern uint32_t OSPI_kernel_frequency;
 
 
 /*!<
@@ -50,7 +42,7 @@ extern uint32_t OSPI_kernel_frequency;
  * */
 void config_SPI_kernel_clocks(
 		SPI123_CLK_SRC_t spi123_src, SPI456_CLK_SRC_t spi45_src,
-		SPI456_CLK_SRC_t spi6_src, OSPI_CLK_SRC_t ospi_src
+		SPI456_CLK_SRC_t spi6_src
 );
 
 

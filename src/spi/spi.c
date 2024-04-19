@@ -2,7 +2,7 @@
 // Created by marijn on 7/19/23.
 //
 
-#include "spi.h"
+#include "spi/spi.h"
 
 
 /*!<
@@ -11,7 +11,7 @@
 uint32_t SPI123_kernel_frequency =	0;
 uint32_t SPI45_kernel_frequency =	0;
 uint32_t SPI6_kernel_frequency =	0;
-uint32_t OSPI_kernel_frequency =	0;
+uint32_t OSPI12_kernel_frequency =	0;
 
 
 /*!<
@@ -19,7 +19,7 @@ uint32_t OSPI_kernel_frequency =	0;
  * */
 void config_SPI_kernel_clocks(
 	SPI123_CLK_SRC_t spi123_src, SPI456_CLK_SRC_t spi45_src,
-	SPI456_CLK_SRC_t spi6_src, OSPI_CLK_SRC_t ospi_src
+	SPI456_CLK_SRC_t spi6_src
 ) {
 	RCC->CDCCIP1R &= ~(
 		RCC_CDCCIP1R_SPI123SEL |
@@ -31,8 +31,6 @@ void config_SPI_kernel_clocks(
 	);
 	RCC->SRDCCIPR &= RCC_SRDCCIPR_SPI6SEL;
 	RCC->SRDCCIPR |= spi6_src << RCC_SRDCCIPR_SPI6SEL_Pos;
-	RCC->CDCCIPR &= ~RCC_CDCCIPR_OCTOSPISEL;
-	RCC->CDCCIPR |= ospi_src << RCC_CDCCIPR_OCTOSPISEL_Pos;
 	switch (spi123_src) {
 		case SPI123_CLK_SRC_PLL1_Q:		SPI123_kernel_frequency = PLL1_Q_clock_frequency; break;
 		case SPI123_CLK_SRC_PLL2_P:		SPI123_kernel_frequency = PLL2_P_clock_frequency; break;
@@ -55,11 +53,5 @@ void config_SPI_kernel_clocks(
 		case SPI456_CLK_SRC_HSI:		SPI6_kernel_frequency = HSI_clock_frequency; break;
 		case SPI456_CLK_SRC_CSI:		SPI6_kernel_frequency = CSI_clock_frequency; break;
 		case SPI456_CLK_SRC_HSE:		SPI6_kernel_frequency = HSE_clock_frequency; break;
-	}
-	switch (ospi_src) {
-		case OSPI_CLK_SRC_AHB:			OSPI_kernel_frequency = AHB_clock_frequency; return;	// AHB3
-		case OSPI_CLK_SRC_PLL1_Q:		OSPI_kernel_frequency = PLL1_Q_clock_frequency; return;
-		case OSPI_CLK_SRC_PLL2_R:		OSPI_kernel_frequency = PLL2_R_clock_frequency; return;
-		case OSPI_CLK_SRC_PER:			OSPI_kernel_frequency = PER_clock_frequency; return;
 	}
 }
