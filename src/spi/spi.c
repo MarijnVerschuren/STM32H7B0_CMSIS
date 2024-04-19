@@ -55,3 +55,8 @@ void config_SPI_kernel_clocks(
 		case SPI456_CLK_SRC_HSE:		SPI6_kernel_frequency = HSE_clock_frequency; break;
 	}
 }
+
+
+void fconfig_SPI() {
+
+}

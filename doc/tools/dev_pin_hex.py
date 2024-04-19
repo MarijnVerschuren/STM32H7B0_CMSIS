@@ -9,6 +9,8 @@ if __name__ == "__main__":
 	uart_dev |= (lpuart_dev := "-lpuart" in argv)
 	i2c_dev = "-i2c" in argv
 	usb_dev = "-usb" in argv
+	spi_dev = "-spi" in argv
+	ospi_dev = "-ospi" in argv
 	
 	clocks = {
 		"APB1": 0, "AHB1": 1,
@@ -30,9 +32,9 @@ if __name__ == "__main__":
 		"TIM12": ("APB1", 6),    "TIM13": ("APB1", 7),
 		"TIM14": ("APB1", 8),    "TIM15": ("AHB1", 16),
 		"TIM16": ("AHB1", 17),   "TIM17": ("AHB1", 18),
-		"HRTIM": ("APB2", 29),   "LPTIM1": ("APB1", 9),
-		"LPTIM2": ("APB4", 9),   "LPTIM3": ("APB4", 10),
-		"LPTIM4": ("APB4", 11),  "LPTIM5": ("APB4", 12)
+		"LPTIM1": ("APB1", 9),	 "LPTIM2": ("APB4", 9),
+		"LPTIM3": ("APB4", 10),	 "LPTIM4": ("APB4", 11),
+		"LPTIM5": ("APB4", 12)
 	}
 	uarts = {
 		"UART1": ("APB2", 4),    "UART2": ("APB1", 17),
@@ -47,6 +49,14 @@ if __name__ == "__main__":
 	}
 	usbs = {
 		"USB1": ("AHB1", 25),    "USB2": ("AHB1", 27)
+	}
+	spis = {
+		"SPI1": ("APB2", 12),	"SPI2": ("APB1", 14),
+		"SPI3": ("APB1", 15),	"SPI4": ("APB2", 13),
+		"SPI5": ("APB2", 20),	"SPI6": ("APB4", 5),
+	}
+	ospis = {
+		# TODO
 	}
 	
 	while True:
@@ -89,6 +99,12 @@ if __name__ == "__main__":
 				except:
 					clk, dev = usbs[usb.upper()]
 					if ulpi: sub = (0x1 << 5) | ((dev + 1) & 0x1f)  # clock is always AHB1
+				clk = clocks[clk]
+			elif spi_dev:
+				spi = input("spi: ")
+				try:    spi = spis[f"SPI{int(spi)}"]
+				except: spi = spis[spi.upper()]
+				clk, dev = spi
 				clk = clocks[clk]
 			else:
 				clk = input("clk: ")

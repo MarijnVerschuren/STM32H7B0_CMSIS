@@ -28,6 +28,12 @@ typedef enum {
 	SPI123_CLK_SRC_PER =		0b100
 } SPI123_CLK_SRC_t;
 
+typedef enum {
+	I2C_PIN_DISABLE =	0x00000000,
+	// SPI1
+
+} SPI_GPIO_t;
+
 
 /*!<
  * variables
@@ -44,6 +50,7 @@ void config_SPI_kernel_clocks(
 		SPI123_CLK_SRC_t spi123_src, SPI456_CLK_SRC_t spi45_src,
 		SPI456_CLK_SRC_t spi6_src
 );
-
+void fconfig_SPI();
+void config_SPI();  // TODO
 
 #endif //STM32H_CMSIS_SPI_H

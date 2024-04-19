@@ -16,18 +16,6 @@
 
 
 /*!<
- * defines
- * */
-#define ROM_PAGE_SIZE	0x80U
-#define ROM_PAGE_COUNT	0x1FFU
-
-
-/*!<
- * types
- * */
-
-
-/*!<
  * variables
  * */
 I2C_setting_t I2C_setting = {
@@ -46,6 +34,9 @@ uint8_t cryp_IV[16] = {  // TODO: random and read
 };
 
 
+/*!<
+ * interrupts
+ * */
 extern void TIM8_UP_TIM13_IRQHandler(void) {
 	TIM8->SR &= ~TIM_SR_UIF;  // clear interrupt flag
 	GPIO_toggle(GPIOC, 1);
@@ -58,23 +49,9 @@ extern void EXTI15_10_IRQHandler(void) {	// button K2
 }
 
 
-void write_encrypted_page(I2C_TypeDef* i2c, uint8_t ROM_address, uint16_t page_address, const void* key, CRYP_KEY_t key_type, void* buffer) {
-	static uint8_t page_buffer[ROM_PAGE_SIZE];  // :(
-	AES_CBC_encrypt_setup(cryp_IV, key, key_type);
-	for (uint8_t i = 0; i < (ROM_PAGE_SIZE / AES_BLOCK_SIZE); i++) {
-		AES_CBC_process_block(&buffer[i * AES_BLOCK_SIZE], &page_buffer[i * AES_BLOCK_SIZE]);
-	} I2C_master_write_reg(i2c, ROM_address, page_address << 7U, I2C_REG_16, page_buffer, ROM_PAGE_SIZE, 100);
-}
-
-void read_encrypted_page(I2C_TypeDef* i2c, uint8_t ROM_address, uint8_t page_address, const void* key, CRYP_KEY_t key_type, void* buffer) {
-	I2C_master_read_reg(i2c, ROM_address, page_address << 7U, I2C_REG_16, buffer, ROM_PAGE_SIZE, 100);
-	AES_CBC_decrypt_setup(cryp_IV, key, key_type);  // TODO: read IV when format is defined
-	for (uint8_t i = 0; i < (ROM_PAGE_SIZE / AES_BLOCK_SIZE); i++) {
-		AES_CBC_process_block(&buffer[i * AES_BLOCK_SIZE], &buffer[i * AES_BLOCK_SIZE]);
-	}
-}
-
-
+/*!<
+ * functions
+ * */
 int main(void) {
 	/* clock config */
 	set_PLL_config(
