@@ -15,6 +15,7 @@
 >* I2C fast mode
 >* I2C slave mode
 >* Clean up code (make 0xA0UL and 0b10UL consistent!!)
+>  * remove redundant pin device devices (scl_i2c, sda_i2c)
 >* clock security on HSE and LSE (+interrupt!!)
 >* HRTIM
 >* LPTIM

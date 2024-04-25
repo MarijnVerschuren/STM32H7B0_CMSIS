@@ -5,6 +5,7 @@
 #include "encoder.h"
 #include "usart.h"
 #include "i2c.h"
+#include "spi/spi.h"
 #include "crc.h"
 #include "rng.h"
 #include "watchdog.h"
@@ -60,15 +61,15 @@ int main(void) {
 		5/*M*/, 2/*P*/, 4/*Q*/, 2/*R*/, 112/*N*/, 0		// M = 5, P = 2, Q = 2, R = 2, N = 112, N_frac = 0
 	);  // 25MHz / 5 * 112 / (2, 2, 2)	=>	(280Mhz, 280Mhz, *280Mhz)
 	set_PLL_config(
-		1, 0, 0, 0, 0, 0,								// disable PLL2
+		1, 1, 1, 1, 0, 0,								// enable PLL1 (P, Q)
 		PLL_IN_4MHz_8MHz, PLL_VCO_WIDE,					// 5MHz in, 192MHz < VCO < 960MHz
-		5/*M*/, 2/*P*/, 4/*Q*/, 2/*R*/, 112/*N*/, 0		// M = 5, P = 2, Q = 2, R = 2, N = 112, N_frac = 0
-	);  // 25MHz / 5 * 112 / (2, 2, 2)	=>	(280Mhz, 280Mhz, *280Mhz)
+		5/*M*/, 5/*P*/, 5/*Q*/, 5/*R*/, 100/*N*/, 0		// M = 5, P = 5, Q = 5, R = 5, N = 100, N_frac = 0
+	);  // 25MHz / 5 * 100 / (5, 5, 5)	=>	(100Mhz, 100Mhz, *100Mhz)
 	set_PLL_config(
 		2, 0, 0, 0, 0, 0,								// disable PLL3
 		PLL_IN_4MHz_8MHz, PLL_VCO_WIDE,					// 5MHz in, 192MHz < VCO < 960MHz
 		5/*M*/, 2/*P*/, 4/*Q*/, 2/*R*/, 112/*N*/, 0		// M = 5, P = 2, Q = 2, R = 2, N = 112, N_frac = 0
-	);  // 25MHz / 5 * 112 / (2, 2, 2)	=>	(280Mhz, 280Mhz, *280Mhz)
+	);  // 25MHz / 5 * 112 / (2, 2, 2)	=>	(*280Mhz, *280Mhz, *280Mhz)
 	set_RTC_config(0, RCC_SRC_DISABLED, 0);				// disable RTC
 	set_clock_config(
 		0, 1, 0, 0, 0, 1,								// disable HSI, enable HSE, enable HSI48
@@ -117,7 +118,10 @@ int main(void) {
 	/* I2C config */
 	config_I2C_kernel_clocks(I2C_CLK_SRC_APBx, I2C_CLK_SRC_APBx);
 	config_I2C(I2C3_SCL_A8, I2C3_SDA_C9, I2C_setting, 0x50);
-	//A8 SCL, C9 SDA
+
+	/* SPI config */
+	config_SPI_kernel_clocks(SPI123_CLK_SRC_PLL2_P, SPI456_CLK_SRC_PLL2_Q, SPI456_CLK_SRC_PLL2_Q);
+	config_SPI(SPI2_SCK_B13, SPI2_MOSI_B15, SPI_PIN_DISABLE, SPI_PIN_DISABLE);  // transmit only
 
 	/* USB config */  // TODO: do low power later (when debugging is fixed)
 	config_USB_kernel_clock(USB_CLK_SRC_HSI48);
