@@ -40,7 +40,7 @@ uint8_t cryp_IV[16] = {  // TODO: random and read
  * */
 extern void TIM8_UP_TIM13_IRQHandler(void) {
 	TIM8->SR &= ~TIM_SR_UIF;  // clear interrupt flag
-	GPIO_toggle(GPIOC, 1);
+	//GPIO_toggle(GPIOC, 1);
 }
 
 extern void EXTI15_10_IRQHandler(void) {	// button K2
@@ -61,7 +61,7 @@ int main(void) {
 		5/*M*/, 2/*P*/, 4/*Q*/, 2/*R*/, 112/*N*/, 0		// M = 5, P = 2, Q = 2, R = 2, N = 112, N_frac = 0
 	);  // 25MHz / 5 * 112 / (2, 2, 2)	=>	(280Mhz, 280Mhz, *280Mhz)
 	set_PLL_config(
-		1, 1, 1, 1, 0, 0,								// enable PLL1 (P, Q)
+		1, 1, 1, 1, 0, 0,								// enable PLL2 (P, Q)
 		PLL_IN_4MHz_8MHz, PLL_VCO_WIDE,					// 5MHz in, 192MHz < VCO < 960MHz
 		5/*M*/, 5/*P*/, 5/*Q*/, 5/*R*/, 100/*N*/, 0		// M = 5, P = 5, Q = 5, R = 5, N = 100, N_frac = 0
 	);  // 25MHz / 5 * 100 / (5, 5, 5)	=>	(100Mhz, 100Mhz, *100Mhz)
@@ -121,7 +121,8 @@ int main(void) {
 
 	/* SPI config */
 	config_SPI_kernel_clocks(SPI123_CLK_SRC_PLL2_P, SPI456_CLK_SRC_PLL2_Q, SPI456_CLK_SRC_PLL2_Q);
-	config_SPI(SPI2_SCK_B13, SPI2_MOSI_B15, SPI_PIN_DISABLE, SPI_PIN_DISABLE);  // transmit only
+	config_SPI_master(SPI2_SCK_B13, SPI2_MOSI_B15, SPI_PIN_DISABLE, SPI2_SS_B12, 7U);  // transmit only
+	config_GPIO(GPIOB, 12, GPIO_output, GPIO_no_pull, GPIO_push_pull);
 
 	/* USB config */  // TODO: do low power later (when debugging is fixed)
 	config_USB_kernel_clock(USB_CLK_SRC_HSI48);
@@ -131,7 +132,7 @@ int main(void) {
 
 	//Watchdog config (32kHz / (4 << prescaler))
 	config_watchdog(0, 0xFFFUL);	// 1s
-	start_watchdog();
+	//start_watchdog();
 
 
 	uint8_t hash_data[] = {0x00, 0x00, 0x00, 'a'};	// TODO: endian-ness swap??
@@ -150,10 +151,19 @@ int main(void) {
 	uint8_t key[32] = "PASSWORD for KEYBOARD!!";
 
 
+	uint8_t buff[32];
+	for (uint8_t i = 0; i < 32; i++) { buff[i] = i; }
+
+
 	// main loop
 	for(;;) {
-		reset_watchdog();
-		if (!GO) { continue; }
+		//reset_watchdog();
+		//if (!GO) { continue; }
+
+		// TODO: test NSS with pullup!!
+		SPI_master_transmit(SPI2, buff, 32U, 100);
+		GPIO_toggle(GPIOC, 1);
+		delay_ms(100);
 
 		/*	Keyboard */
 		/*

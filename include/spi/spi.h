@@ -98,6 +98,11 @@ typedef enum {
 } SPI_SS_POL_t;
 
 typedef enum {
+	SPI_SS_MODE_CONSTANT =	0b0U,
+	SPI_SS_MODE_PULSED =	0b1U,
+} SPI_SS_MODE_t;
+
+typedef enum {
 	SPI_CLK_POL_LOW =		0b0U,
 	SPI_CLK_POL_HIGH =		0b1U,
 } SPI_CLK_POL_t;
@@ -106,6 +111,16 @@ typedef enum {
 	SPI_CLK_PHASE_EDGE1 =	0b0U,
 	SPI_CLK_PHASE_EDGE2 =	0b1U,
 } SPI_CLK_PHASE_t;
+
+typedef enum {
+	SPI_ENDIANNESS_MSB =	0b0U,
+	SPI_ENDIANNESS_LSB =	0b1U,
+} SPI_ENDIANNESS_t;
+
+typedef enum {
+	SPI_PROTOCOL_MOTOROLA =	0b000U,
+	SPI_PROTOCOL_TI =		0b001U,
+} SPI_PROTOCOL_t;
 
 
 /*!<
@@ -123,11 +138,21 @@ void config_SPI_kernel_clocks(
 		SPI123_CLK_SRC_t spi123_src, SPI456_CLK_SRC_t spi45_src,
 		SPI456_CLK_SRC_t spi6_src
 );
-void fconfig_SPI(
+void fconfig_SPI_master(
 	SPI_GPIO_t sck, SPI_GPIO_t mosi, SPI_GPIO_t miso, SPI_GPIO_t ss,
-	SPI_MODE_t mode, SPI_DIV_t div, SPI_SS_POL_t ss_pol, SPI_CLK_POL_t clk_pol,
-	SPI_CLK_PHASE_t clk_phase
+	SPI_MODE_t mode, SPI_DIV_t div, SPI_SS_POL_t ss_pol, SPI_SS_MODE_t ss_mode,
+	uint8_t ss_idle, SPI_CLK_POL_t clk_pol, SPI_CLK_PHASE_t clk_phase, uint8_t data_idle,
+	uint8_t data_size, uint8_t fifo_threshold, SPI_ENDIANNESS_t endianness, SPI_PROTOCOL_t protocol
 );
-void config_SPI(SPI_GPIO_t sck, SPI_GPIO_t mosi, SPI_GPIO_t miso, SPI_GPIO_t ss, SPI_DIV_t div);
+void config_SPI_master(SPI_GPIO_t sck, SPI_GPIO_t mosi, SPI_GPIO_t miso, SPI_GPIO_t ss, SPI_DIV_t div);
+
+
+/*!<
+ * usage
+ * */
+// TODO: halfduplex, 16/32 bit transfer (as of yet unused)
+// TODO: IT, DMA, errors
+uint32_t SPI_master_transmit(SPI_TypeDef* spi, const uint8_t* buffer, uint32_t size, uint32_t timeout);		// -> n unprocessed
+
 
 #endif //STM32H_CMSIS_SPI_H
