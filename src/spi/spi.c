@@ -87,8 +87,8 @@ void fconfig_SPI_master(
 
 	enable_dev(spi);
 	fconfig_GPIO(sck_port, sck_pin.num, GPIO_alt_func, GPIO_no_pull, GPIO_push_pull, GPIO_very_high_speed, sck_pin.alt);
-	if (mosi != SPI_PIN_DISABLE)	{ fconfig_GPIO(mosi_port, mosi_pin.num, GPIO_alt_func, GPIO_no_pull, GPIO_push_pull, GPIO_very_high_speed, mosi_pin.alt); }
-	if (miso != SPI_PIN_DISABLE)	{ fconfig_GPIO(miso_port, miso_pin.num, GPIO_alt_func, GPIO_no_pull, GPIO_push_pull, GPIO_very_high_speed, miso_pin.alt); }
+	if (mosi) { fconfig_GPIO(mosi_port, mosi_pin.num, GPIO_alt_func, GPIO_no_pull, GPIO_push_pull, GPIO_very_high_speed, mosi_pin.alt); }
+	if (miso) { fconfig_GPIO(miso_port, miso_pin.num, GPIO_alt_func, GPIO_no_pull, GPIO_push_pull, GPIO_very_high_speed, miso_pin.alt); }
 
 	spi->CR1 = 0x00000000UL;
 	// TODO: MASRX??? (clock suspend on RXFIFO full)

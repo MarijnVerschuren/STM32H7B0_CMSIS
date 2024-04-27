@@ -6,6 +6,7 @@
 #define STM32H7B0_CMSIS_OSPI_H
 #include "main.h"
 #include "sys.h"
+#include "gpio.h"
 
 
 /*!<
@@ -56,6 +57,14 @@ typedef enum {
 	OSPI2_IO2_I11 =		0x0B8300B3,
 } OSPI_GPIO_t;
 
+typedef enum {
+	OSPI_MODE_OCTO =		0b000U,
+	OSPI_MODE_QUAD =		0b001U,
+	OSPI_MODE_DUAL =		0b010U,
+	OSPI_MODE_SINGLE =		0b011U,
+	OSPI_MODE_DUAL_QUAD =	0b100U
+} OSPI_MODE_t;  // TODO!!!
+
 
 /*!<
  * variables
@@ -70,7 +79,7 @@ extern uint32_t OSPI12_kernel_frequency;
 void config_OSPI_kernel_clock(OSPI_CLK_SRC_t ospi_src);
 void fconfig_OSPI(
 	OSPI_GPIO_t sck, OSPI_GPIO_t io0, OSPI_GPIO_t io1, OSPI_GPIO_t io2, OSPI_GPIO_t io3,
-	OSPI_GPIO_t io4, OSPI_GPIO_t io5, OSPI_GPIO_t io6, OSPI_GPIO_t io7
+	OSPI_GPIO_t io4, OSPI_GPIO_t io5, OSPI_GPIO_t io6, OSPI_GPIO_t io7, OSPI_MODE_t mode
 );
 
 void config_DSPI(OSPI_GPIO_t sck, OSPI_GPIO_t io0, OSPI_GPIO_t io1);
