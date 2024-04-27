@@ -71,7 +71,7 @@ if __name__ == "__main__":
 		"SPI5": ("APB2", 20),	"SPI6": ("APB4", 5),
 	}
 	ospis = {
-		# TODO
+		"OSPI1": ("AHB3", 14),	"OSPI2": ("AHB3", 19)
 	}
 	
 	while True:
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 			if arg.tim:
 				tim = tims["HRTIM"]
 				if not arg.hrtim:
-					tim = input("tim: ") if not arg.pnum else arg.pnum
+					tim = input(f"{'lp' if arg.lptim else ''}tim: ") if not arg.pnum else arg.pnum
 					try:    tim = tims[f"LPTIM{int(tim)}" if arg.lptim else f"TIM{int(tim)}"]
 					except: tim = tims[tim.upper()]
 				clk, dev = tim
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 				channel = max((int(input("channel: ")) - 1), 0)
 				sub |= channel & 0x7
 			elif arg.uart:
-				uart = input("uart: ") if not arg.pnum else arg.pnum
+				uart = input(f"{'lp' if arg.lpuart else ''}uart: ") if not arg.pnum else arg.pnum
 				try:    uart = uarts[f"LPUART{int(uart)}" if arg.lpuart else f"UART{int(uart)}"]
 				except: uart = uarts[uart.upper()]
 				clk, dev = uart
@@ -120,6 +120,12 @@ if __name__ == "__main__":
 				try:    spi = spis[f"SPI{int(spi)}"]
 				except: spi = spis[spi.upper()]
 				clk, dev = spi
+				clk = clocks[clk]
+			elif arg.ospi:
+				ospi = input("ospi: ") if not arg.pnum else arg.pnum
+				try:    ospi = ospis[f"OSPI{int(ospi)}"]
+				except: ospi = ospis[ospi.upper()]
+				clk, dev = ospi
 				clk = clocks[clk]
 			else:
 				clk = input("clk: ")

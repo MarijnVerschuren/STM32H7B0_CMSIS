@@ -6,6 +6,7 @@
 #include "usart.h"
 #include "i2c.h"
 #include "spi/spi.h"
+#include "spi/ospi.h"
 #include "crc.h"
 #include "rng.h"
 #include "watchdog.h"
@@ -61,10 +62,10 @@ int main(void) {
 		5/*M*/, 2/*P*/, 4/*Q*/, 2/*R*/, 112/*N*/, 0		// M = 5, P = 2, Q = 2, R = 2, N = 112, N_frac = 0
 	);  // 25MHz / 5 * 112 / (2, 2, 2)	=>	(280Mhz, 280Mhz, *280Mhz)
 	set_PLL_config(
-		1, 1, 1, 1, 0, 0,								// enable PLL2 (P, Q)
+		1, 1, 1, 1, 1, 0,								// enable PLL2 (P, Q, R)
 		PLL_IN_4MHz_8MHz, PLL_VCO_WIDE,					// 5MHz in, 192MHz < VCO < 960MHz
 		5/*M*/, 5/*P*/, 5/*Q*/, 5/*R*/, 100/*N*/, 0		// M = 5, P = 5, Q = 5, R = 5, N = 100, N_frac = 0
-	);  // 25MHz / 5 * 100 / (5, 5, 5)	=>	(100Mhz, 100Mhz, *100Mhz)
+	);  // 25MHz / 5 * 100 / (5, 5, 5)	=>	(100Mhz, 100Mhz, 100Mhz)
 	set_PLL_config(
 		2, 0, 0, 0, 0, 0,								// disable PLL3
 		PLL_IN_4MHz_8MHz, PLL_VCO_WIDE,					// 5MHz in, 192MHz < VCO < 960MHz
@@ -122,7 +123,12 @@ int main(void) {
 	/* SPI config */
 	config_SPI_kernel_clocks(SPI123_CLK_SRC_PLL2_P, SPI456_CLK_SRC_PLL2_Q, SPI456_CLK_SRC_PLL2_Q);
 	config_SPI_master(SPI2_SCK_B13, SPI2_MOSI_B15, SPI_PIN_DISABLE, SPI_DIV_4);  // transmit only
-	config_GPIO(GPIOB, 12, GPIO_output, GPIO_pull_up, GPIO_open_drain);
+	config_GPIO(GPIOB, 12, GPIO_output, GPIO_pull_up, GPIO_open_drain);  // NSS
+
+	/* QSPI config */
+	config_OSPI_kernel_clock(OSPI_CLK_SRC_PLL2_R);
+	config_QSPI(OSPI1_SCK_B2, OSPI1_IO0_B1, OSPI1_IO1_B0, OSPI1_IO2_A7, OSPI1_IO3_A6);
+	config_GPIO(GPIOC, 4, GPIO_output, GPIO_pull_up, GPIO_open_drain);  // NSS
 
 	/* USB config */  // TODO: do low power later (when debugging is fixed)
 	config_USB_kernel_clock(USB_CLK_SRC_HSI48);
@@ -160,12 +166,17 @@ int main(void) {
 		//reset_watchdog();
 		//if (!GO) { continue; }
 
-		/*	SPI */ /*
+		/* SPI */ /*
 		SPI_master_transmit(SPI2, GPIOB, 12, buff, 32U, 100);
 		GPIO_toggle(GPIOC, 1);
 		*/
 
-		/*	Keyboard */ /*
+		/* QSPI */ /*
+		OSPI_transmit(OCTOSPI1, GPIOC, 4, buff, 32U, 100);
+		GPIO_toggle(GPIOC, 1);
+		*/
+
+		/* Keyboard */ /*
 		HID_buffer[2] = 0x4;
 		send_HID_report(&USB_handle, HID_buffer, 8);
 		delay_ms(delay);
@@ -173,7 +184,7 @@ int main(void) {
 		send_HID_report(&USB_handle, HID_buffer, 8);
 		*/
 
-		/*  ROM */ /*
+		/* ROM */ /*
 		write_encrypted_page(I2C3, 0x50, 0x0, key, CRYP_KEY_256, data);
 		read_encrypted_page(I2C3, 0x50, 0x0, key, CRYP_KEY_256, rom_data);
 		*/
