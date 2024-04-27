@@ -121,8 +121,8 @@ int main(void) {
 
 	/* SPI config */
 	config_SPI_kernel_clocks(SPI123_CLK_SRC_PLL2_P, SPI456_CLK_SRC_PLL2_Q, SPI456_CLK_SRC_PLL2_Q);
-	config_SPI_master(SPI2_SCK_B13, SPI2_MOSI_B15, SPI_PIN_DISABLE, SPI2_SS_B12, 7U);  // transmit only
-	config_GPIO(GPIOB, 12, GPIO_output, GPIO_no_pull, GPIO_push_pull);
+	config_SPI_master(SPI2_SCK_B13, SPI2_MOSI_B15, SPI_PIN_DISABLE, SPI_DIV_4);  // transmit only
+	config_GPIO(GPIOB, 12, GPIO_output, GPIO_pull_up, GPIO_open_drain);
 
 	/* USB config */  // TODO: do low power later (when debugging is fixed)
 	config_USB_kernel_clock(USB_CLK_SRC_HSI48);
@@ -160,13 +160,12 @@ int main(void) {
 		//reset_watchdog();
 		//if (!GO) { continue; }
 
-		// TODO: test NSS with pullup!!
-		SPI_master_transmit(SPI2, buff, 32U, 100);
+		/*	SPI */ /*
+		SPI_master_transmit(SPI2, GPIOB, 12, buff, 32U, 100);
 		GPIO_toggle(GPIOC, 1);
-		delay_ms(100);
+		*/
 
-		/*	Keyboard */
-		/*
+		/*	Keyboard */ /*
 		HID_buffer[2] = 0x4;
 		send_HID_report(&USB_handle, HID_buffer, 8);
 		delay_ms(delay);
@@ -174,9 +173,10 @@ int main(void) {
 		send_HID_report(&USB_handle, HID_buffer, 8);
 		*/
 
-		/*  ROM */
-		//write_encrypted_page(I2C3, 0x50, 0x0, key, CRYP_KEY_256, data);
-		//read_encrypted_page(I2C3, 0x50, 0x0, key, CRYP_KEY_256, rom_data);
+		/*  ROM */ /*
+		write_encrypted_page(I2C3, 0x50, 0x0, key, CRYP_KEY_256, data);
+		read_encrypted_page(I2C3, 0x50, 0x0, key, CRYP_KEY_256, rom_data);
+		*/
 
 		GO = 0;
 	}
