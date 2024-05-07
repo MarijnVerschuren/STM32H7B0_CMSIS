@@ -127,8 +127,13 @@ int main(void) {
 
 	/* QSPI config */
 	config_OSPI_kernel_clock(OSPI_CLK_SRC_PLL2_R);
-	config_QSPI(OSPI1_SCK_B2, OSPI1_IO0_B1, OSPI1_IO1_B0, OSPI1_IO2_A7, OSPI1_IO3_A6);
-	config_GPIO(GPIOC, 4, GPIO_output, GPIO_pull_up, GPIO_open_drain);  // NSS
+	config_QSPI(
+		OCTOSPI1, OSPIM_PORT1_SCK_B2,
+		OSPIM_PORT1_IO0_B1, OSPIM_PORT1_IO1_B0,
+		OSPIM_PORT1_IO2_A7, OSPIM_PORT1_IO3_A6,
+		OSPIM_PORT1_NSS_B6, 0U, OPSI_MEMORY_MICRON, 31
+	);
+	// config_GPIO(GPIOC, 4, GPIO_output, GPIO_pull_up, GPIO_open_drain);  // NSS
 
 	/* USB config */  // TODO: do low power later (when debugging is fixed)
 	config_USB_kernel_clock(USB_CLK_SRC_HSI48);
@@ -171,10 +176,10 @@ int main(void) {
 		GPIO_toggle(GPIOC, 1);
 		*/
 
-		/* QSPI */ /*
-		OSPI_transmit(OCTOSPI1, GPIOC, 4, buff, 32U, 100);
-		GPIO_toggle(GPIOC, 1);
-		*/
+		/* QSPI */
+		OSPI_transmit(OCTOSPI1, buff, 32U, 100); // TODO
+		//GPIO_toggle(GPIOC, 1);
+
 
 		/* Keyboard */ /*
 		HID_buffer[2] = 0x4;
