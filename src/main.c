@@ -177,9 +177,16 @@ int main(void) {
 		*/
 
 		/* QSPI */
-		OSPI_transmit(OCTOSPI1, buff, 32U, 100); // TODO
+		OSPI_transmit(
+			OCTOSPI1,
+			0x5A5A5A5A, OSPI_SIZE_32B, OSPI_MODE_QUAD, 0U,	// instruction
+			0x6C6C6C6C, OSPI_SIZE_32B, OSPI_MODE_QUAD, 0U,	// address
+			0x7D7D7D7D, OSPI_SIZE_32B, OSPI_MODE_QUAD, 0U,	// alt bytes
+			buff, 32U, OSPI_MODE_QUAD, 0U,					// data
+			100
+		); // TODO test on custom board
 		//GPIO_toggle(GPIOC, 1);
-
+		delay_ms(100);
 
 		/* Keyboard */ /*
 		HID_buffer[2] = 0x4;

@@ -75,11 +75,11 @@ typedef enum {
 } OSPIM_MUX_t;
 
 typedef enum {
-	OSPI_MODE_OCTO =		0b000U,
-	OSPI_MODE_QUAD =		0b001U,
+	OSPI_MODE_DISABLE =		0b000U,
+	OSPI_MODE_SINGLE =		0b001U,
 	OSPI_MODE_DUAL =		0b010U,
-	OSPI_MODE_SINGLE =		0b011U,
-	OSPI_MODE_DUAL_QUAD =	0b100U
+	OSPI_MODE_QUAD =		0b011U,
+	OSPI_MODE_OCTO =		0b100U,
 } OSPI_MODE_t;  // TODO!!!
 
 typedef enum {
@@ -95,6 +95,13 @@ typedef enum {
 	OSPI_CLOCK_MODE_0 =			0b0U,
 	OSPI_CLOCK_MODE_3 =			0b1U,
 } OSPI_CLOCK_MODE_t;
+
+typedef enum {
+	OSPI_SIZE_8B =				0b00U,
+	OSPI_SIZE_16B =				0b01U,
+	OSPI_SIZE_24B =				0b10U,
+	OSPI_SIZE_32B =				0b11U
+} OSPI_SIZE_t;
 
 typedef enum {
 	OSPI_WRAP_SIZE_NONE =		0b000U,
@@ -140,10 +147,17 @@ void fconfig_OSPIM(
 // TODO: mode??
 void fconfig_OSPI(
 	OCTOSPI_TypeDef* ospi,
-	OSPI_MODE_t mode, uint8_t prescaler, OSPI_MEMORY_t mem, uint8_t addr_size,
-	uint8_t nss_high_time, uint8_t nss_boundary, uint8_t DLYB_bypass, OSPI_CLOCK_MODE_t clk_mode,
-	OSPI_WRAP_SIZE_t wrap, uint8_t max_transfer, uint32_t refresh, uint8_t fifo_threshold,
-	OSPI_SHIFT_t shift, OSPI_HOLD_t delay, uint8_t dummy_cycles
+	uint8_t prescaler, OSPI_MEMORY_t mem, uint8_t addr_size, uint8_t nss_high_time, uint8_t nss_boundary,
+	uint8_t DLYB_bypass, OSPI_CLOCK_MODE_t clk_mode, OSPI_WRAP_SIZE_t wrap, uint8_t max_transfer,
+	uint32_t refresh, uint8_t fifo_threshold, OSPI_SHIFT_t shift, OSPI_HOLD_t delay, uint8_t dummy_cycles
+);
+
+void fconfig_OSPI_MMAP(
+	OCTOSPI_TypeDef* ospi,
+	uint32_t read_instruction,	uint32_t write_instruction,	OSPI_SIZE_t instruction_size,
+	OSPI_SIZE_t address_size,	uint32_t alt_bytes,			OSPI_SIZE_t alt_bytes_size,
+	OSPI_MODE_t imode,	uint8_t idtr,	OSPI_MODE_t admode,	uint8_t addtr,
+	OSPI_MODE_t abmode,	uint8_t abdtr,	OSPI_MODE_t dmode,	uint8_t ddtr
 );
 
 // default configs NO MUX!
@@ -168,7 +182,14 @@ void config_OSPI(
 /*!<
  * usage
  * */
-uint32_t OSPI_transmit(OCTOSPI_TypeDef* ospi, const uint8_t* buffer, uint32_t size, uint32_t timeout);
+uint32_t OSPI_transmit(
+	OCTOSPI_TypeDef* ospi,
+	uint32_t instruction,	OSPI_SIZE_t instruction_size,	OSPI_MODE_t imode,	uint8_t idtr,
+	uint32_t address,		OSPI_SIZE_t address_size,		OSPI_MODE_t admode,	uint8_t addtr,
+	uint32_t alt_bytes,		OSPI_SIZE_t alt_bytes_size,		OSPI_MODE_t abmode,	uint8_t abdtr,
+	const uint8_t* buffer,	uint32_t size,					OSPI_MODE_t dmode,	uint8_t ddtr,
+	uint32_t timeout
+);
 
 
 
