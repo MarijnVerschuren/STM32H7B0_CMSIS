@@ -165,6 +165,11 @@ int main(void) {
 	uint8_t buff[32];
 	for (uint8_t i = 0; i < 32; i++) { buff[i] = i; }
 
+	/* W25Q64!! TODO: program QSPI to work with this chip!!
+	 * https://pdf1.alldatasheet.com/datasheet-pdf/view/1243795/WINBOND/W25Q64JVSSIQ.html
+	 SPI1 NCS/CLK/MISO/MOSI : PA15/PB3/PB4/PB5 (NOR Flash)
+	 QuadSPI NCS/CLK/IO0/IO1/IO2/IO3 : PB6/PB2/PD11/PD12/PE2/PD13 (NOR Flash)
+	*/
 
 	// main loop
 	for(;;) {
@@ -203,9 +208,6 @@ int main(void) {
 
 		GO = 0;
 	}
-
-
-	/*!< ROM code */
 }
 
 // p.g. 346 RCC diagram
