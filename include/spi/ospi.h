@@ -182,6 +182,10 @@ void config_OSPI(
 /*!<
  * usage
  * */
+uint8_t OSPI_test_command(OCTOSPI_TypeDef* ospi);
+uint8_t OSPI_test_receive(OCTOSPI_TypeDef* ospi, uint8_t* buffer);
+
+
 uint32_t OSPI_transmit(
 	OCTOSPI_TypeDef* ospi,
 	uint32_t instruction,	OSPI_SIZE_t instruction_size,	OSPI_MODE_t imode,	uint8_t idtr,

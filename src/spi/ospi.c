@@ -6,28 +6,6 @@
 
 
 /*!<
- * static types
- * */
-typedef struct __PACKED {
-	uint32_t	CLKEN	: 1U;
-	uint32_t	CLKSRC	: 1U;
-	uint32_t	RES_0	: 2U;
-	uint32_t	DQSEN	: 1U;
-	uint32_t	DQSSRC	: 1U;
-	uint32_t	RES_1	: 2U;
-	uint32_t	NCSEN	: 1U;
-	uint32_t	NCSSRC	: 1U;
-	uint32_t	RES_2	: 6U;
-	uint32_t	IOLEN	: 1U;
-	uint32_t	IOLSRC	: 2U;
-	uint32_t	RES_3	: 5U;
-	uint32_t	IOHEN	: 1U;
-	uint32_t	IOHSRC	: 2U;
-	uint32_t	RES_4	: 5U;
-} PCR_t;
-
-
-/*!<
  * variables
  * */
 uint32_t OSPI12_kernel_frequency =	0;
@@ -73,8 +51,7 @@ void fconfig_OSPIM(
 					*io6_port = int_to_GPIO(io6_pin.port),
 					*io7_port = int_to_GPIO(io7_pin.port),
 					*nss_port = int_to_GPIO(nss_pin.port);
-	PCR_t			*port = (PCR_t*)OCTOSPIM->PCR;
-	enable_dev(OCTOSPIM);
+	do { RCC->AHB3ENR |= RCC_AHB3ENR_IOMNGREN; } while (!(RCC->AHB3ENR & RCC_AHB3ENR_IOMNGREN));
 	fconfig_GPIO(sck_port, sck_pin.num, GPIO_alt_func, GPIO_no_pull, GPIO_push_pull, GPIO_very_high_speed, sck_pin.alt);
 	fconfig_GPIO(io0_port, io0_pin.num, GPIO_alt_func, GPIO_no_pull, GPIO_push_pull, GPIO_very_high_speed, io0_pin.alt);
 	if (nss) { fconfig_GPIO(nss_port, nss_pin.num, GPIO_alt_func, GPIO_no_pull, GPIO_push_pull, GPIO_very_high_speed, nss_pin.alt); }  // TODO: always hardware nss??
@@ -102,26 +79,44 @@ void fconfig_OSPIM(
 		(mux << OCTOSPIM_CR_MUXEN_Pos)
 	); if (mux) { ospi_num = 0U; }
 
-	port[sck_pin.id.sub & 0b1U].CLKSRC =		ospi_num;
-	port[sck_pin.id.sub & 0b1U].NCSEN =			0b1U;
+	OCTOSPIM->PCR[sck_pin.id.sub & 0b1U] &= ~(OCTOSPIM_PCR_CLKSRC);
+	OCTOSPIM->PCR[sck_pin.id.sub & 0b1U] |= (
+		(ospi_num << OCTOSPIM_PCR_CLKSRC_Pos)	|
+		OCTOSPIM_PCR_CLKEN
+	);
 	if (nss) {
-		port[nss_pin.id.sub & 0b1U].NCSSRC =	ospi_num;
-		port[nss_pin.id.sub & 0b1U].NCSEN =		0b1U;
+		OCTOSPIM->PCR[nss_pin.id.sub & 0b1U] &= ~(OCTOSPIM_PCR_NCSSRC);
+		OCTOSPIM->PCR[nss_pin.id.sub & 0b1U] |= (
+			(ospi_num << OCTOSPIM_PCR_NCSSRC_Pos)	|
+			OCTOSPIM_PCR_NCSEN
+		);
 	}
 	if (io0_pin.id.sub & 0x4U) {
-		port[io0_pin.id.sub & 0b1U].IOHSRC =	(ospi_num << 1U);
-		port[io0_pin.id.sub & 0b1U].IOHEN =		0b1U;
+		OCTOSPIM->PCR[io0_pin.id.sub & 0b1U] &= ~(OCTOSPIM_PCR_IOHSRC);
+		OCTOSPIM->PCR[io0_pin.id.sub & 0b1U] |= (
+			((ospi_num << 1U) << OCTOSPIM_PCR_IOHSRC_Pos)	|
+			OCTOSPIM_PCR_IOHEN
+		);
 	} else {
-		port[io0_pin.id.sub & 0b1U].IOLSRC =	(ospi_num << 1U);
-		port[io0_pin.id.sub & 0b1U].IOLEN =		0b1U;
+		OCTOSPIM->PCR[io0_pin.id.sub & 0b1U] &= ~(OCTOSPIM_PCR_IOLSRC);
+		OCTOSPIM->PCR[io0_pin.id.sub & 0b1U] |= (
+			((ospi_num << 1U) << OCTOSPIM_PCR_IOLSRC_Pos)	|
+			OCTOSPIM_PCR_IOLEN
+		);
 	}
 	if(io4) {
 	if (io4_pin.id.sub & 0x4U) {
-		port[io4_pin.id.sub & 0b1U].IOHSRC =	(ospi_num << 1U) | 0b1U;
-		port[io0_pin.id.sub & 0b1U].IOHEN =		0b1U;
+		OCTOSPIM->PCR[io4_pin.id.sub & 0b1U] &= ~(OCTOSPIM_PCR_IOHSRC);
+		OCTOSPIM->PCR[io4_pin.id.sub & 0b1U] |= (
+			(((ospi_num << 1U) | 0b1U) << OCTOSPIM_PCR_IOHSRC_Pos)	|
+			OCTOSPIM_PCR_IOHEN
+		);
 	} else {
-		port[io4_pin.id.sub & 0b1U].IOLSRC =	(ospi_num << 1U) | 0b1U;
-		port[io0_pin.id.sub & 0b1U].IOLEN =		0b1U;
+		OCTOSPIM->PCR[io4_pin.id.sub & 0b1U] &= ~(OCTOSPIM_PCR_IOLSRC);
+		OCTOSPIM->PCR[io4_pin.id.sub & 0b1U] |= (
+			(((ospi_num << 1U) | 0b1U) << OCTOSPIM_PCR_IOLSRC_Pos)	|
+			OCTOSPIM_PCR_IOLEN
+		);
 	}
 	}
 }
@@ -133,7 +128,8 @@ void fconfig_OSPI(  // TODO: mode??
 	uint8_t DLYB_bypass, OSPI_CLOCK_MODE_t clk_mode, OSPI_WRAP_SIZE_t wrap, uint8_t max_transfer,
 	uint32_t refresh, uint8_t fifo_threshold, OSPI_SHIFT_t shift, OSPI_HOLD_t delay, uint8_t dummy_cycles
 ) {
-	enable_dev(ospi);
+	uint32_t mask = ospi == OCTOSPI1 ? RCC_AHB3ENR_OSPI1EN : RCC_AHB3ENR_OSPI2EN;
+	do { RCC->AHB3ENR |= mask; } while (!(RCC->AHB3ENR & mask));
 
 	// TODO: |= ??
 	ospi->DCR1 = (
@@ -288,6 +284,74 @@ void config_OSPI(
 /*!<
  * usage
  * */
+uint8_t OSPI_test_command(OCTOSPI_TypeDef* ospi) {
+	/*com.InstructionMode = QSPI_INSTRUCTION_1_LINE; // QSPI_INSTRUCTION_...
+	com.Instruction = W25Q_DEVID;	 // Command
+
+	com.AddressMode = QSPI_ADDRESS_1_LINE;
+	com.AddressSize = QSPI_ADDRESS_24_BITS;
+	com.Address = 0x0U;
+
+	com.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+	com.AlternateBytes = QSPI_ALTERNATE_BYTES_NONE;
+	com.AlternateBytesSize = QSPI_ALTERNATE_BYTES_NONE;
+
+	com.DummyCycles = 0;
+	com.DataMode = QSPI_DATA_1_LINE;
+	com.NbData = 1;
+
+	com.DdrMode = QSPI_DDR_MODE_DISABLE;
+	com.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+	com.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;*/
+
+	// code based on W25Q64 needs TODO!!!
+
+	while (ospi->SR & OCTOSPI_SR_BUSY);
+
+	ospi->CR &= ~OCTOSPI_CR_FMODE;
+	ospi->TCR &= ~OCTOSPI_TCR_DCYC;  // 0
+	ospi->CCR &= ~(
+		OCTOSPI_CCR_IMODE | OCTOSPI_CCR_IDTR |
+		OCTOSPI_CCR_ISIZE | OCTOSPI_CCR_ADMODE |
+		OCTOSPI_CCR_ADDTR | OCTOSPI_CCR_ADSIZE
+	);
+	ospi->CCR |= (
+		(OSPI_MODE_SINGLE << OCTOSPI_CCR_IMODE_Pos)		|
+		(OSPI_MODE_SINGLE << OCTOSPI_CCR_ADMODE_Pos)	|
+		(0b10 << OCTOSPI_CCR_ADSIZE_Pos)
+	);
+
+	ospi->IR = 0xABU;
+	ospi->AR = 0;
+
+	while (!(ospi->SR & OCTOSPI_SR_TCF));
+	ospi->FCR = OCTOSPI_FCR_CTCF;
+
+	return 0;
+}
+
+uint8_t OSPI_test_receive(OCTOSPI_TypeDef* ospi, uint8_t* buffer) {
+	// TODO
+
+	uint8_t cnt = ospi->DLR + 1;
+	ospi->CR &= ~OCTOSPI_CR_FMODE;
+	ospi->CR |= (0b1 << OCTOSPI_CR_FMODE_Pos);
+	ospi->AR = ospi->AR; // ?????
+
+	do {
+		while (!(ospi->SR & (OCTOSPI_SR_FTF | OCTOSPI_SR_TCF)));
+		*buffer = ospi->DR;
+		cnt--;
+	} while (cnt);
+
+	while (!(ospi->SR & OCTOSPI_SR_TCF));
+	ospi->FCR = OCTOSPI_FCR_CTCF;
+
+	return 0;
+}
+
+
+
 // indirect mode
 uint32_t OSPI_transmit(
 	OCTOSPI_TypeDef* ospi,
@@ -298,20 +362,6 @@ uint32_t OSPI_transmit(
 	uint32_t timeout
 ) {
 	uint64_t start = tick;
-	ospi->CCR &= ~(
-		OCTOSPI_CCR_ISIZE	|
-		OCTOSPI_CCR_IDTR	|
-		OCTOSPI_CCR_ADSIZE	|
-		OCTOSPI_CCR_ADDTR	|
-		OCTOSPI_CCR_ABSIZE	|
-		OCTOSPI_CCR_ABDTR	|
-		OCTOSPI_CCR_DDTR
-	);
-	if (idtr) { ospi->CCR |= OCTOSPI_CCR_IDTR; }
-	if (addtr) { ospi->CCR |= OCTOSPI_CCR_ADDTR; }
-	if (abdtr) { ospi->CCR |= OCTOSPI_CCR_ABDTR; }
-	if (ddtr) { ospi->CCR |= OCTOSPI_CCR_DDTR; }
-
 	ospi->CCR = (
 		// set modes
 		(imode << OCTOSPI_CCR_IMODE_Pos)	|	// instruction mode
@@ -323,6 +373,11 @@ uint32_t OSPI_transmit(
 		(address_size << OCTOSPI_CCR_ADSIZE_Pos)	|
 		(alt_bytes_size << OCTOSPI_CCR_ABSIZE_Pos)
 	);
+
+	if (idtr) { ospi->CCR |= OCTOSPI_CCR_IDTR; }
+	if (addtr) { ospi->CCR |= OCTOSPI_CCR_ADDTR; }
+	if (abdtr) { ospi->CCR |= OCTOSPI_CCR_ABDTR; }
+	if (ddtr) { ospi->CCR |= OCTOSPI_CCR_DDTR; }
 
 	ospi->IR = instruction;		// set instruction
 	ospi->AR = address;			// set address

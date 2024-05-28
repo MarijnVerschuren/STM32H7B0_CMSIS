@@ -16,6 +16,8 @@
 #include "hash.h"
 #include "cryp.h"
 
+#include "spi/W25Q64.h"
+
 
 /*!<
  * variables
@@ -126,14 +128,18 @@ int main(void) {
 	config_GPIO(GPIOB, 12, GPIO_output, GPIO_pull_up, GPIO_open_drain);  // NSS
 
 	/* QSPI config */
+
+	/* W25Q64!! TODO: program QSPI to work with this chip!!
+	 * https://pdf1.alldatasheet.com/datasheet-pdf/view/1243795/WINBOND/W25Q64JVSSIQ.html
+	 QuadSPI NCS/CLK/IO0/IO1/IO2/IO3 : PB6/PB2/PD11/PD12/PE2/PD13 (NOR Flash)
+	*/
 	config_OSPI_kernel_clock(OSPI_CLK_SRC_PLL2_R);
 	config_QSPI(
 		OCTOSPI1, OSPIM_PORT1_SCK_B2,
-		OSPIM_PORT1_IO0_B1, OSPIM_PORT1_IO1_B0,
-		OSPIM_PORT1_IO2_A7, OSPIM_PORT1_IO3_A6,
+		OSPIM_PORT1_IO0_D11, OSPIM_PORT1_IO1_D12,
+		OSPIM_PORT1_IO2_E2, OSPIM_PORT1_IO3_D13,
 		OSPIM_PORT1_NSS_B6, 0U, OPSI_MEMORY_MICRON, 31
 	);
-	// config_GPIO(GPIOC, 4, GPIO_output, GPIO_pull_up, GPIO_open_drain);  // NSS
 
 	/* USB config */  // TODO: do low power later (when debugging is fixed)
 	config_USB_kernel_clock(USB_CLK_SRC_HSI48);
@@ -165,12 +171,6 @@ int main(void) {
 	uint8_t buff[32];
 	for (uint8_t i = 0; i < 32; i++) { buff[i] = i; }
 
-	/* W25Q64!! TODO: program QSPI to work with this chip!!
-	 * https://pdf1.alldatasheet.com/datasheet-pdf/view/1243795/WINBOND/W25Q64JVSSIQ.html
-	 SPI1 NCS/CLK/MISO/MOSI : PA15/PB3/PB4/PB5 (NOR Flash)
-	 QuadSPI NCS/CLK/IO0/IO1/IO2/IO3 : PB6/PB2/PD11/PD12/PE2/PD13 (NOR Flash)
-	*/
-
 	// main loop
 	for(;;) {
 		//reset_watchdog();
@@ -182,16 +182,25 @@ int main(void) {
 		*/
 
 		/* QSPI */
-		OSPI_transmit(
+		// TODO https://github.com/Crazy-Geeks/STM32-W25Q-QSPI
+		/*OSPI_transmit(
 			OCTOSPI1,
 			0x5A5A5A5A, OSPI_SIZE_32B, OSPI_MODE_QUAD, 0U,	// instruction
 			0x6C6C6C6C, OSPI_SIZE_32B, OSPI_MODE_QUAD, 0U,	// address
 			0x7D7D7D7D, OSPI_SIZE_32B, OSPI_MODE_QUAD, 0U,	// alt bytes
 			buff, 32U, OSPI_MODE_QUAD, 0U,					// data
 			100
-		); // TODO test on custom board
+		);*/
+		delay_ms(1000);
+
+		uint8_t id = 0;
+		OSPI_test_command(OCTOSPI1);
+		OSPI_test_receive(OCTOSPI1, &id);
+
+		// W25Q64 ID success, id = 8!!!
+
 		//GPIO_toggle(GPIOC, 1);
-		delay_ms(100);
+		delay_ms(1000);
 
 		/* Keyboard */ /*
 		HID_buffer[2] = 0x4;
