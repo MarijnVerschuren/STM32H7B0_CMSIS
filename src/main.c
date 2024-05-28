@@ -191,16 +191,14 @@ int main(void) {
 			buff, 32U, OSPI_MODE_QUAD, 0U,					// data
 			100
 		);*/
+
 		delay_ms(1000);
 
-		uint8_t id = 0;
-		OSPI_test_command(OCTOSPI1);
-		OSPI_test_receive(OCTOSPI1, &id);
+		W25Q64_init();
 
-		// W25Q64 ID success, id = 8!!!
+		for(;;);
 
 		//GPIO_toggle(GPIOC, 1);
-		delay_ms(1000);
 
 		/* Keyboard */ /*
 		HID_buffer[2] = 0x4;

@@ -121,6 +121,25 @@ typedef enum {
 	OSPI_HOLD_QUARTER_CYCLE =	0b1U
 } OSPI_HOLD_t;
 
+typedef struct __PACKED {  // TODO: redo names
+	const uint8_t* buffer;					// 0x00
+	uint32_t instruction;					// 0x04
+	uint32_t address;						// 0x08
+	uint32_t alt_bytes;						// 0x0C
+	uint32_t size;							// 0x10
+	uint8_t idtr					: 1;	// 0x14:0
+	uint8_t addtr					: 1;	// 0x14:1
+	uint8_t abdtr					: 1;	// 0x14:2
+	uint8_t ddtr					: 1;	// 0x14:3
+	OSPI_SIZE_t instruction_size	: 2;	// 0x14:4
+	OSPI_SIZE_t address_size		: 2;	// 0x14:6
+	OSPI_MODE_t imode				: 3;	// 0x15:0
+	OSPI_MODE_t admode				: 3;	// 0x15:3
+	OSPI_SIZE_t alt_bytes_size		: 2;	// 0x15:6
+	OSPI_MODE_t abmode				: 3;	// 0x16:0
+	OSPI_MODE_t dmode				: 3;	// 0x16:3
+} OSPI_TX_t;	// 0x17 -> 23B
+
 
 /*!<
  * variables
@@ -182,18 +201,8 @@ void config_OSPI(
 /*!<
  * usage
  * */
-uint8_t OSPI_test_command(OCTOSPI_TypeDef* ospi);
 uint8_t OSPI_test_receive(OCTOSPI_TypeDef* ospi, uint8_t* buffer);
-
-
-uint32_t OSPI_transmit(
-	OCTOSPI_TypeDef* ospi,
-	uint32_t instruction,	OSPI_SIZE_t instruction_size,	OSPI_MODE_t imode,	uint8_t idtr,
-	uint32_t address,		OSPI_SIZE_t address_size,		OSPI_MODE_t admode,	uint8_t addtr,
-	uint32_t alt_bytes,		OSPI_SIZE_t alt_bytes_size,		OSPI_MODE_t abmode,	uint8_t abdtr,
-	const uint8_t* buffer,	uint32_t size,					OSPI_MODE_t dmode,	uint8_t ddtr,
-	uint32_t timeout
-);
+uint32_t OSPI_transmit(OCTOSPI_TypeDef* ospi, OSPI_TX_t* tx, uint32_t timeout);
 
 
 

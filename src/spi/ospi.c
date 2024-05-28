@@ -284,55 +284,10 @@ void config_OSPI(
 /*!<
  * usage
  * */
-uint8_t OSPI_test_command(OCTOSPI_TypeDef* ospi) {
-	/*com.InstructionMode = QSPI_INSTRUCTION_1_LINE; // QSPI_INSTRUCTION_...
-	com.Instruction = W25Q_DEVID;	 // Command
-
-	com.AddressMode = QSPI_ADDRESS_1_LINE;
-	com.AddressSize = QSPI_ADDRESS_24_BITS;
-	com.Address = 0x0U;
-
-	com.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-	com.AlternateBytes = QSPI_ALTERNATE_BYTES_NONE;
-	com.AlternateBytesSize = QSPI_ALTERNATE_BYTES_NONE;
-
-	com.DummyCycles = 0;
-	com.DataMode = QSPI_DATA_1_LINE;
-	com.NbData = 1;
-
-	com.DdrMode = QSPI_DDR_MODE_DISABLE;
-	com.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-	com.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;*/
-
-	// code based on W25Q64 needs TODO!!!
-
-	while (ospi->SR & OCTOSPI_SR_BUSY);
-
-	ospi->CR &= ~OCTOSPI_CR_FMODE;
-	ospi->TCR &= ~OCTOSPI_TCR_DCYC;  // 0
-	ospi->CCR &= ~(
-		OCTOSPI_CCR_IMODE | OCTOSPI_CCR_IDTR |
-		OCTOSPI_CCR_ISIZE | OCTOSPI_CCR_ADMODE |
-		OCTOSPI_CCR_ADDTR | OCTOSPI_CCR_ADSIZE
-	);
-	ospi->CCR |= (
-		(OSPI_MODE_SINGLE << OCTOSPI_CCR_IMODE_Pos)		|
-		(OSPI_MODE_SINGLE << OCTOSPI_CCR_ADMODE_Pos)	|
-		(0b10 << OCTOSPI_CCR_ADSIZE_Pos)
-	);
-
-	ospi->IR = 0xABU;
-	ospi->AR = 0;
-
-	while (!(ospi->SR & OCTOSPI_SR_TCF));
-	ospi->FCR = OCTOSPI_FCR_CTCF;
-
-	return 0;
-}
-
+// indirect mode
 uint8_t OSPI_test_receive(OCTOSPI_TypeDef* ospi, uint8_t* buffer) {
-	// TODO
-
+	// TODO: check influence of: com.NbData = 1;
+	// TODO: then fix this function
 	uint8_t cnt = ospi->DLR + 1;
 	ospi->CR &= ~OCTOSPI_CR_FMODE;
 	ospi->CR |= (0b1 << OCTOSPI_CR_FMODE_Pos);
@@ -340,8 +295,8 @@ uint8_t OSPI_test_receive(OCTOSPI_TypeDef* ospi, uint8_t* buffer) {
 
 	do {
 		while (!(ospi->SR & (OCTOSPI_SR_FTF | OCTOSPI_SR_TCF)));
-		*buffer = ospi->DR;
-		cnt--;
+		*buffer = *((volatile uint8_t*)&ospi->DR);
+		buffer++; cnt--;
 	} while (cnt);
 
 	while (!(ospi->SR & OCTOSPI_SR_TCF));
@@ -351,43 +306,36 @@ uint8_t OSPI_test_receive(OCTOSPI_TypeDef* ospi, uint8_t* buffer) {
 }
 
 
-
-// indirect mode
-uint32_t OSPI_transmit(
-	OCTOSPI_TypeDef* ospi,
-	uint32_t instruction,	OSPI_SIZE_t instruction_size,	OSPI_MODE_t imode,	uint8_t idtr,
-	uint32_t address,		OSPI_SIZE_t address_size,		OSPI_MODE_t admode,	uint8_t addtr,
-	uint32_t alt_bytes,		OSPI_SIZE_t alt_bytes_size,		OSPI_MODE_t abmode,	uint8_t abdtr,
-	const uint8_t* buffer,	uint32_t size,					OSPI_MODE_t dmode,	uint8_t ddtr,
-	uint32_t timeout
-) {
+uint32_t OSPI_transmit(OCTOSPI_TypeDef* ospi, OSPI_TX_t* tx, uint32_t timeout) {
 	uint64_t start = tick;
+	while (ospi->SR & OCTOSPI_SR_BUSY) { if ( tick - start > timeout) { return 0xFFFFFFFFUL; } }
+
 	ospi->CCR = (
 		// set modes
-		(imode << OCTOSPI_CCR_IMODE_Pos)	|	// instruction mode
-		(admode << OCTOSPI_CCR_ADMODE_Pos)	|	// address mode
-		(abmode << OCTOSPI_CCR_ABMODE_Pos)	|	// alternate byte mode
-		(dmode << OCTOSPI_CCR_IMODE_Pos)	|	// data mode
+		(tx->imode << OCTOSPI_CCR_IMODE_Pos)	|	// instruction mode
+		(tx->admode << OCTOSPI_CCR_ADMODE_Pos)	|	// address mode
+		(tx->abmode << OCTOSPI_CCR_ABMODE_Pos)	|	// alternate byte mode
+		(tx->dmode << OCTOSPI_CCR_IMODE_Pos)	|	// data mode
 		// set sizes
-		(instruction_size << OCTOSPI_CCR_ISIZE_Pos)	|
-		(address_size << OCTOSPI_CCR_ADSIZE_Pos)	|
-		(alt_bytes_size << OCTOSPI_CCR_ABSIZE_Pos)
+		(tx->instruction_size << OCTOSPI_CCR_ISIZE_Pos)	|
+		(tx->address_size << OCTOSPI_CCR_ADSIZE_Pos)	|
+		(tx->alt_bytes_size << OCTOSPI_CCR_ABSIZE_Pos)
 	);
 
-	if (idtr) { ospi->CCR |= OCTOSPI_CCR_IDTR; }
-	if (addtr) { ospi->CCR |= OCTOSPI_CCR_ADDTR; }
-	if (abdtr) { ospi->CCR |= OCTOSPI_CCR_ABDTR; }
-	if (ddtr) { ospi->CCR |= OCTOSPI_CCR_DDTR; }
+	if (tx->idtr) { ospi->CCR |= OCTOSPI_CCR_IDTR; }
+	if (tx->addtr) { ospi->CCR |= OCTOSPI_CCR_ADDTR; }
+	if (tx->abdtr) { ospi->CCR |= OCTOSPI_CCR_ABDTR; }
+	if (tx->ddtr) { ospi->CCR |= OCTOSPI_CCR_DDTR; }
 
-	ospi->IR = instruction;		// set instruction
-	ospi->AR = address;			// set address
-	ospi->ABR = alt_bytes;		// set alt-bytes
+	ospi->IR = tx->instruction;		// set instruction
+	ospi->AR = tx->address;			// set address
+	ospi->ABR = tx->alt_bytes;		// set alt-bytes
 
 	// dummy-cycle / data phase
-	ospi->DLR = size;			// set transfer size
-	for (uint32_t i = 0; i < size; i++) {
-		while (ospi->SR & OCTOSPI_SR_FTF) { if ( tick - start > timeout) { return size - i; } }
-		*((__IO uint8_t*)&ospi->DR) = buffer[i];
+	ospi->DLR = tx->size;			// set transfer size
+	for (uint32_t i = 0; i < tx->size; i++) {
+		while (ospi->SR & OCTOSPI_SR_FTF) { if ( tick - start > timeout) { return tx->size - i; } }
+		*((__IO uint8_t*)&ospi->DR) = tx->buffer[i];
 	}
 	while (ospi->SR & OCTOSPI_SR_TCF) { if ( tick - start > timeout) { return 0xFFFFFFFFUL; } }
 	ospi->FCR |= OCTOSPI_FCR_CTCF;
