@@ -192,21 +192,16 @@ int main(void) {
 			100
 		);*/
 
-		delay_ms(1000);
-
-		W25Q64_init();
-
-		for(;;);
 
 		//GPIO_toggle(GPIOC, 1);
 
-		/* Keyboard */ /*
+		/* Keyboard */
 		HID_buffer[2] = 0x4;
 		send_HID_report(&USB_handle, HID_buffer, 8);
 		delay_ms(delay);
 		HID_buffer[2] = 0;
 		send_HID_report(&USB_handle, HID_buffer, 8);
-		*/
+
 
 		/* ROM */ /*
 		write_encrypted_page(I2C3, 0x50, 0x0, key, CRYP_KEY_256, data);

@@ -135,7 +135,7 @@ uint32_t SPI_master_transmit(SPI_TypeDef* spi, GPIO_TypeDef* ss_port, uint8_t ss
 	spi->CR2 &= ~SPI_CR2_TSIZE;
 	spi->CR2 |= (size << SPI_CR2_TSIZE_Pos);
 
-	GPIO_write(GPIOB, 12, 0);
+	GPIO_write(ss_port, ss_pin, 0);
 	spi->CR1 |= SPI_CR1_SPE;
 	spi->CR1 |= SPI_CR1_CSTART;
 	while (size--) {
@@ -143,7 +143,7 @@ uint32_t SPI_master_transmit(SPI_TypeDef* spi, GPIO_TypeDef* ss_port, uint8_t ss
 		*((__IO uint8_t*)&spi->TXDR) = *buffer++;
 	}
 	while (!(spi->SR & SPI_SR_EOT)) { if ( tick - start > timeout) { SPI_end_transfer(spi); return -1; } }
-	GPIO_write(GPIOB, 12, 1);
+	GPIO_write(ss_port, ss_pin, 1);
 
 	SPI_end_transfer(spi);
 	return 0U;
