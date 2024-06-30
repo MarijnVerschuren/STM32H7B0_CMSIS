@@ -8,6 +8,12 @@
 
 
 /*!<
+ * defines
+ */
+#define PROGMEM __attribute__((section(".progmem.data")))
+
+
+/*!<
  * device types
  * */
 typedef enum {
