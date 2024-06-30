@@ -6,7 +6,7 @@
 
 W25Q64_status_t stat;
 
-static uint8_t W25Q64_id() {
+static inline uint8_t W25Q64_id(OCTOSPI_TypeDef* qspi) {
 	uint8_t id;
 	OSPI_TX_t tx = {
 		.instruction =		0xABU,
@@ -16,89 +16,89 @@ static uint8_t W25Q64_id() {
 		.address_size =		OSPI_SIZE_24B,
 		.admode =			OSPI_MODE_SINGLE
 	};
-	OSPI_transmit(OCTOSPI1, &tx, 100);
-	OSPI_test_receive(OCTOSPI1, &id);
+	OSPI_transmit(qspi, &tx, 100);
+	OSPI_test_receive(qspi, &id);
 	return id;
 }
 
-static void W25Q64_stat() {
+static inline void W25Q64_stat(OCTOSPI_TypeDef* qspi) {
 	OSPI_TX_t tx = {
 		.instruction =		0x00U,
 		.instruction_size =	OSPI_SIZE_8B,
 		.imode =			OSPI_MODE_SINGLE
 	};
 	tx.instruction = 0x05U;
-	OSPI_transmit(OCTOSPI1, &tx, 100);
-	OSPI_test_receive(OCTOSPI1, &((uint8_t*)&stat)[0]);
+	OSPI_transmit(qspi, &tx, 100);
+	OSPI_test_receive(qspi, &((uint8_t*)&stat)[0]);
 	tx.instruction = 0x35U;
-	OSPI_transmit(OCTOSPI1, &tx, 100);
-	OSPI_test_receive(OCTOSPI1, &((uint8_t*)&stat)[1]);
+	OSPI_transmit(qspi, &tx, 100);
+	OSPI_test_receive(qspi, &((uint8_t*)&stat)[1]);
 	tx.instruction = 0x15U;
-	OSPI_transmit(OCTOSPI1, &tx, 100);
-	OSPI_test_receive(OCTOSPI1, &((uint8_t*)&stat)[2]);
+	OSPI_transmit(qspi, &tx, 100);
+	OSPI_test_receive(qspi, &((uint8_t*)&stat)[2]);
 }
 
-static void W25Q64_SR_write_enable() {
+static inline void W25Q64_SR_write_enable(OCTOSPI_TypeDef* qspi) {
 	OSPI_TX_t tx = {
 		.instruction =		0x50U,
 		.instruction_size =	OSPI_SIZE_8B,
 		.imode =			OSPI_MODE_SINGLE
 	};
-	OSPI_transmit(OCTOSPI1, &tx, 100);
+	OSPI_transmit(qspi, &tx, 100);
 	delay_ms(1); // stat.WEL = 1;
 }
-static void W25Q64_write_enable() {
+static inline void W25Q64_write_enable(OCTOSPI_TypeDef* qspi) {
 	OSPI_TX_t tx = {
 		.instruction =		0x06U,
 		.instruction_size =	OSPI_SIZE_8B,
 		.imode =			OSPI_MODE_SINGLE
 	};
-	OSPI_transmit(OCTOSPI1, &tx, 100);
+	OSPI_transmit(qspi, &tx, 100);
 	delay_ms(1); // stat.WEL = 1;
 }
-static void W25Q64_write_disable() {
+static inline void W25Q64_write_disable(OCTOSPI_TypeDef* qspi) {
 	OSPI_TX_t tx = {
 		.instruction =		0x04U,
 		.instruction_size =	OSPI_SIZE_8B,
 		.imode =			OSPI_MODE_SINGLE
 	};
-	OSPI_transmit(OCTOSPI1, &tx, 100);
+	OSPI_transmit(qspi, &tx, 100);
 	delay_ms(1); // stat.WEL = 1;
 }
 
-static void W25Q64_quad_enable() {
+static inline void W25Q64_quad_enable(OCTOSPI_TypeDef* qspi) {
 	OSPI_TX_t tx = {
 		.instruction =		0x35U,
 		.instruction_size =	OSPI_SIZE_8B,
 		.imode =			OSPI_MODE_SINGLE
 	};
 	uint8_t buffer = 0;
-	OSPI_transmit(OCTOSPI1, &tx, 100);
-	OSPI_test_receive(OCTOSPI1, &buffer);
+	OSPI_transmit(qspi, &tx, 100);
+	OSPI_test_receive(qspi, &buffer);
 
-	W25Q64_SR_write_enable();
+	W25Q64_SR_write_enable(qspi);
 	buffer |= 0b10U;
 
 	tx.instruction = 0x31U;
 	tx.buffer = &buffer;
 	tx.size = 1U;
 	tx.dmode = OSPI_MODE_SINGLE;
-	OSPI_transmit(OCTOSPI1, &tx, 100);
-	W25Q64_write_disable();
+	OSPI_transmit(qspi, &tx, 100);
+	W25Q64_write_disable(qspi);
 }
 
 
-uint8_t W25Q64_init() {
-	uint8_t id = W25Q64_id();
+uint8_t W25Q64_init(OCTOSPI_TypeDef* qspi) {
+	uint8_t id = W25Q64_id(qspi);
 
-	W25Q64_stat();
+	W25Q64_stat(qspi);
 
 	if (!stat.QE) {
-		W25Q64_quad_enable();
+		W25Q64_quad_enable(qspi);
 	}
 
 	delay_ms(100);
-	W25Q64_stat();
+	W25Q64_stat(qspi);
 
 
 	return 0;

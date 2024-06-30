@@ -43,6 +43,6 @@ typedef struct {
 
 
 
-uint8_t W25Q64_init();
+uint8_t W25Q64_init(OCTOSPI_TypeDef* qspi);
 
 #endif // STM32H7B0_CMSIS_W25Q64_H
