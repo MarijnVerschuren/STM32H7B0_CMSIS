@@ -140,7 +140,7 @@ void set_systick_config(
 ) {
 	sys_config.SYSTICK_enable =		SYSTICK_enable;
 	sys_config.SYSTICK_IRQ_enable =	SYSTICK_IRQ_enable;
-	sys_config.SYSTICK_CLK_src =		SYSTICK_CLK_src;
+	sys_config.SYSTICK_CLK_src =	SYSTICK_CLK_src;
 }
 
 
@@ -171,15 +171,15 @@ void sys_clock_init() {
 		(sys_config.HSI48_enable << RCC_CR_HSI48ON_Pos)					|
 		RCC_CR_HSION  /* keep HSI on until clock switch */				|
 		// other settings
-		(sys_config.HSE_CSS_enable << RCC_CR_CSSHSEON_Pos)					|
-		(sys_config.HSI_enable_stop_mode << RCC_CR_HSIKERON_Pos)			|
+		(sys_config.HSE_CSS_enable << RCC_CR_CSSHSEON_Pos)				|
+		(sys_config.HSI_enable_stop_mode << RCC_CR_HSIKERON_Pos)		|
 		(sys_config.CSI_enable_stop_mode << RCC_CR_CSIKERON_Pos)
 	);
 	clock_ready_mask = (
-		(sys_config.HSI_enable << RCC_CR_HSIRDY_Pos)						|
-		(sys_config.HSE_enable << RCC_CR_HSERDY_Pos)						|
-		(sys_config.CSI_enable << RCC_CR_CSIRDY_Pos)						|
-		(sys_config.HSI48_enable << RCC_CR_HSI48RDY_Pos)					|
+		(sys_config.HSI_enable << RCC_CR_HSIRDY_Pos)					|
+		(sys_config.HSE_enable << RCC_CR_HSERDY_Pos)					|
+		(sys_config.CSI_enable << RCC_CR_CSIRDY_Pos)					|
+		(sys_config.HSI48_enable << RCC_CR_HSI48RDY_Pos)				|
 		(sys_config.HSE_CSS_enable << RCC_CR_CSSHSEON_Pos)
 	);
 	while ((RCC->CR & clock_ready_mask) != clock_ready_mask);	// wait until all enabled basic clocks are ready
